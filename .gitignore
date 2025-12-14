@@ -1,1 +1,14 @@
-/.quarto/
+# macOS
+.DS_Store
+
+# Quarto internal cache (NOT the rendered site)
+.quarto/
+
+# R / RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Logs
+*.log
