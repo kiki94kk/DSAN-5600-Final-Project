@@ -1,0 +1,367 @@
+---
+title: "Univariate TS Models(ARIMA/SARIMA)"
+author: "Ke Tian"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+    echo: true
+    message: false
+    warning: false
+---
+
+```{r, include=FALSE}
+rmarkdown::render("eda.qmd")
+```
+
+# Introduction
+
+In this page, we will do ARIMA and SARIMA based on the previous page EDA of natural gas production and prices.
+
+# ARIMA
+
+## Natural Gas Production
+
+From the previous [Exploratory Data Analysis](https://ketian.georgetown.domains/5600webpage/_site/exploratorydataanalysis.html), we get the following information :
+
+1\. Before differencing, there is significant autocorrelation in the time series, the ACF is significant at lag 1 and then decreases gradually, and the PACF decays rapidly at lag 1, indicating that the data are non-stationary.
+
+2\. After the first order differencing, the data are relatively stable, but the Augmented Dickey-Fuller Test confirms that the data are still non-stationary. So we will perform a second order difference to try to make the data stationary.
+
+3\. The p value of Augmented Dickey-Fuller Test of Second difference is smaller than 0.5, which means the data is stationary.
+
+## ACF and PACF {.tabset}
+
+### Second difference ACF and PACF
+
+based on the plot:
+
+1.  The ACF has two significant peaks, so q = 2
+2.  The PACF has one significant peak, so p = 1
+3.  we do diffenece twice, so d = 2
+
+![ACF and PACF](1.jpg)
+
+### Manual ARIMA
+
+```{r}
+library(forecast)
+library(tibble)
+
+p_values <- c(0, 1, 2)
+d_values <- c(2)
+q_values <- c(0, 1, 2)
+
+model_results <- tibble(
+  Model = character(),
+  AIC = numeric(),
+  BIC = numeric(),
+  RMSE = numeric()
+)
+
+for (p in p_values) {
+  for (d in d_values) {
+    for (q in q_values) {
+      model_name <- paste0("ARIMA(", p, ",", d, ",", q, ")")
+        
+      model <- Arima(ts_us_gas, order = c(p, d, q))
+
+      rmse <- sqrt(mean(residuals(model)^2, na.rm = TRUE))
+      
+      model_results <- model_results %>%
+        add_row(Model = model_name, AIC = model$aic, BIC = model$bic, RMSE = rmse)
+    }
+  }
+}
+
+print(model_results)
+```
+
+Based on the result, ARIMA(2,2,1) is the best model, cause it has smaller AIC(716.5059) and BIC(724.3108), and the RMSE is smaller than other model.
+
+### Equation
+
+Base on the model ARIMA(2,2,1), We write this equation. $$
+   (Y_t - 2 Y_{t-1} + Y_{t-2}) = \phi_1 (Y_{t-1} - 2 Y_{t-2} + Y_{t-3}) + \phi_2 (Y_{t-2} - 2 Y_{t-3} + Y_{t-4}) + \theta_1 \epsilon_{t-1} + \epsilon_t
+$$
+
+### Model Diagnotic
+
+Here we will do the model Diagnotic
+
+```{r}
+library(tseries)
+
+best_model <- Arima(ts_us_gas, order = c(2,2,1))
+par(mfrow = c(2,2))
+
+autoplot(residuals(best_model)) + 
+  ggtitle("Residuals of ARIMA(2,2,1)")
+
+acf(residuals(best_model), main="ACF of Residuals for ARIMA(2,2,1)")
+
+qqnorm(residuals(best_model))
+qqline(residuals(best_model), col="red")
+
+
+Box.test(residuals(best_model), lag=10, type="Ljung-Box")
+```
+
+The residual plots show that the residuals fluctuate around the zero mean with no clear trend or pattern. It shows that the model fits the data better. The ACF plot shows that the autocorrelation of the residuals is low and all the lags are within the blue dashed line (95% confidence interval), indicating that the residuals are almost white noise.The Q-Q plot shows how well the distribution of the residuals fits the data relative to the normal distribution.The Box-Ljung test p-value is 0.9707, which is much larger than 0.05, which suggests that the original hypothesis cannot be rejected, i.e., the residuals are white noise.
+
+### auto.arima
+
+```{r}
+auto_model <- auto.arima(ts_us_gas)
+
+print(auto_model)
+
+manual_model <- Arima(ts_us_gas, order = c(2,2,1))
+
+model_comparison <- data.frame(
+  Model = c("Manual ARIMA(2,2,1)", paste0("Auto ", auto_model)),
+  AIC = c(AIC(manual_model), AIC(auto_model)),
+  BIC = c(BIC(manual_model), BIC(auto_model)),
+  RMSE = c(sqrt(mean(residuals(manual_model)^2, na.rm = TRUE)),
+           sqrt(mean(residuals(auto_model)^2, na.rm = TRUE)))
+)
+
+print(model_comparison)
+```
+
+The best model from auto.arima is the same as the one we chose manually, and both AIC, BIC and RMSE is same. This suggests that the p,d,q choices we made based on ACF, PACF, and differential stability analysis are reasonable.
+
+### Forcast
+
+```{r}
+library(ggplot2)
+library(forecast)
+
+ts_us_gas <- ts(us_gas$Production, start = min(us_gas$Year), frequency = 1)
+
+forecast_horizon <- 10
+best_model <- Arima(ts_us_gas, order = c(2,2,1))
+
+arima_forecast <- forecast(best_model, h = forecast_horizon)
+
+autoplot(arima_forecast) +
+  labs(title = "Forecast using ARIMA(2,2,1)",
+       x = "Year", y = "Predicted Values")
+```
+
+The forecast graph shows that natural gas production is expected to continue to rise over the next 10 years.
+
+Confidence intervals provide a range of uncertainty in a forecast. The dark blue area: 80% confidence interval, indicates a higher probability that future forecasts will fall within this interval, and the light blue area: 95% confidence interval, indicates a higher probability that forecasts will fall within this interval, but the range is wider, reflecting greater uncertainty.
+
+### Compare ARIMA model with Benchmark methods
+
+```{r}
+forecast_horizon <- 10  
+
+
+best_model <- Arima(ts_us_gas, order = c(2,2,1))  
+arima_forecast <- forecast(best_model, h = forecast_horizon)
+
+mean_forecast_values <- rep(mean(ts_us_gas), forecast_horizon)  
+moving_avg_forecast_values <- rep(mean(tail(ts_us_gas, 5)), forecast_horizon)  
+random_walk_forecast_values <- rep(tail(ts_us_gas, 1), forecast_horizon) 
+
+exp_smooth_model <- ets(ts_us_gas)
+exp_smooth_forecast <- forecast(exp_smooth_model, h = forecast_horizon)
+
+forecast_df <- data.frame(
+  Year = seq(end(ts_us_gas)[1] + 1, by = 1, length.out = forecast_horizon),
+  ARIMA = arima_forecast$mean,
+  Mean_Forecast = mean_forecast_values,
+  Moving_Avg = moving_avg_forecast_values,
+  Random_Walk = random_walk_forecast_values,
+  Exp_Smooth = exp_smooth_forecast$mean
+)
+
+forecast_df_long <- forecast_df %>%
+  pivot_longer(cols = -Year, names_to = "Model", values_to = "Forecast")
+
+ggplot(forecast_df_long, aes(x = Year, y = Forecast, color = Model)) +
+  geom_line(size = 1) +
+  labs(title = "Comparison of ARIMA and Benchmark Methods",
+       x = "Year",
+       y = "Predicted Values",
+       color = "Model") 
+```
+
+# SARIMA
+
+## Natural Gas Price of Resdiential Price
+
+## ACF and PACF {.tabset}
+
+From [Exploratory Data Analysis](https://ketian.georgetown.domains/5600webpage/_site/exploratorydataanalysis.html), we have did the ACF and PACF, and the Augmented Dickey-Fuller Test, the p-value is 0.1 which means the data is stationary, we don't need to do differencing.
+
+Here is the graph of ACF and PACF:
+
+![ACF and PACF](2.jpg) We can get the information from that: s = 12, d = 0, p = 2, q = 2. look at the decomposition graph which come from [Exploratory Data Analysis](https://ketian.georgetown.domains/5600webpage/_site/exploratorydataanalysis.html).We can see the trend was significantly higher, but the seasonal pattern was stable, and ACF was still significant at lag s=12, indicating that the seasonal pattern was still strong, and thus seasonal differencing was needed.
+
+```{r}
+ts_residential_seasonal_diff <- diff(ts_residential, lag = 12, differences = 1)
+
+par(mfrow = c(2, 2))
+plot(ts_residential, main = "Original Time Series")
+plot(ts_residential_seasonal_diff, main = "Seasonally Differenced Series")
+acf(ts_residential_seasonal_diff, main = "ACF - Seasonal Differencing")
+pacf(ts_residential_seasonal_diff, main = "PACF - Seasonal Differencing")
+par(mfrow = c(1,1))
+
+adf.test(ts_residential_seasonal_diff)
+```
+
+```{r}
+ts_residential_diff <- diff(ts_residential_seasonal_diff, differences = 1)
+par(mfrow = c(1, 2))
+acf(ts_residential_diff, main = "ACF - After Seasonal & First Difference")
+pacf(ts_residential_diff, main = "PACF - After Seasonal & First Difference")
+par(mfrow = c(1, 1))
+adf.test(ts_residential_diff)
+```
+
+Although we performed seasonal differencing, the ADF test still indicated that the data was non-stationary. Therefore, we will apply another seasonal differencing. Based on the results after differencing, the data appears to be stationary. Now let's determine pdq and PDQ： s = 12, p = 2, d = 1, q = 2, P = 2, D = 1, Q = 2
+
+## Maunal SARIMA
+
+```{r}
+p_values <- 0:2
+q_values <- 0:2
+P_values <- 0:2
+Q_values <- 0:2
+d <- 1 
+D <- 1 
+s <- 12 
+
+
+results <- data.frame(Model = character(), AIC = numeric(), BIC = numeric(), RMSE = numeric(), stringsAsFactors = FALSE)
+
+for (p in p_values) {
+  for (q in q_values) {
+    for (P in P_values) {
+      for (Q in Q_values) {
+        model_name <- paste0("SARIMA(", p, ",", d, ",", q, ") x (", P, ",", D, ",", Q, ")_", s)
+
+        model <- tryCatch(
+          Arima(ts_residential, order = c(p, d, q), seasonal = c(P, D, Q), lambda = NULL),
+          error = function(e) NULL
+        )
+
+        if (!is.null(model)) {
+          rmse <- sqrt(mean(residuals(model)^2, na.rm = TRUE))
+
+          results <- rbind(results, data.frame(
+            Model = model_name,
+            AIC = model$aic,
+            BIC = model$bic,
+            RMSE = rmse
+          ))
+        }
+      }
+    }
+  }
+}
+
+results <- results[order(results$AIC), ]
+print(results)
+```
+
+Fit all model, we find that SARIMA(0,1,0)x(0,1,1)\[12\] is the best model, cause it has lower AIC, BIC.
+
+## auto.arima
+
+```{r}
+auto_model <- auto.arima(ts_residential, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
+print(auto_model)
+```
+
+```{r}
+best_manual_model <- Arima(ts_residential, order = c(0,1,0), seasonal = c(0,1,1))
+
+best_auto_model <- auto.arima(ts_residential, seasonal = TRUE)
+
+comparison <- data.frame(
+  Model = c("Manual SARIMA(0,1,0) × (0,1,1)_12", "Auto ARIMA"),
+  AIC = c(AIC(best_manual_model), AIC(best_auto_model)),
+  BIC = c(BIC(best_manual_model), BIC(best_auto_model)),
+  RMSE = c(accuracy(best_manual_model)[2], accuracy(best_auto_model)[2])
+)
+
+print(comparison)
+```
+
+we can see from the comparision result, manual SARIMA is better than Auto ARIMA, it has lower AIC, BIC and RMSE.
+
+## Equation
+
+Now let's get the equation of SARIMA(0,1,0)x(0,1,1)\[12\]
+
+$$
+(Y_t - Y_{t-1} - Y_{t-12} + Y_{t-13}) = \epsilon_t + \Theta_1 \epsilon_{t-12}
+$$
+
+## Model Diagnotic
+
+```{r}
+residuals_manual <- residuals(best_manual_model)
+
+par(mfrow = c(2,2))
+
+plot(residuals_manual, main = "Residuals of SARIMA(0,1,0) × (0,1,1)_12", ylab = "Residuals")
+
+acf(residuals_manual, main = "ACF of Residuals")
+
+qqnorm(residuals_manual, main = "QQ Plot of Residuals")
+qqline(residuals_manual, col = "red", lwd = 2)
+
+Box.test(residuals_manual, lag = 12, type = "Ljung-Box")
+
+```
+
+The fluctuations of the residuals are smoother, with no significant trend changes, indicating that the model has captured the structure of the time series better. Most of the points of the residuals fall on the red theoretical normal distribution line, indicating that the residuals approximately obey the normal distribution. The ACF plot shows that the autocorrelation of the residuals is already small, and all the autocorrelation coefficients are within the confidence intervals, indicating that the residuals are basically white noise. The p-value = 0.406, which is much larger than 0.05, and it is not possible to reject the original hypothesis, that is, the residuals are white noise.
+
+## Forcast
+
+```{r}
+fitted_model <- Arima(ts_residential, order = c(0,1,0), seasonal = list(order = c(0,1,1), period = 12))
+
+forecast_36 <- forecast(fitted_model, h = 36)
+
+
+autoplot(forecast_36) + 
+  ggtitle("SARIMA(0,1,0) × (0,1,1)[12] Forcast") + 
+  xlab("Time") + 
+  ylab("Residential Price ($/Mcf)")
+```
+
+From the prediction results, it can be seen that residential natural gas prices will continue to show cyclical fluctuations in growth over the next 36 months, and the prediction interval gradually increases over time, indicating that the uncertainty of the forward prediction is high, which is the same as the characteristics of the SARIMA model: short-term prediction is more reliable, but the long-term prediction of the uncertainty is larger
+
+## Seasonal Cross Validation
+
+```{r}
+train_size <- round(0.8 * length(ts_residential))
+
+train_set <- window(ts_residential, end = time(ts_residential)[train_size])
+test_set  <- window(ts_residential, start = time(ts_residential)[train_size + 1])
+
+
+
+fitted_model <- Arima(train_set, order = c(0,1,0), seasonal = list(order = c(0,1,1), period = 12))
+summary(fitted_model)
+
+forecast_1 <- forecast(fitted_model, h = length(test_set))
+
+
+rmse_1 <- sqrt(mean((forecast_1$mean - test_set)^2, na.rm = TRUE))
+print(paste("1-step ahead RMSE:", rmse_1))
+
+forecast_12 <- forecast(fitted_model, h = 12)
+test_set_12 <- test_set[1:12]
+rmse_12 <- sqrt(mean((forecast_12$mean[1:length(test_set_12)] - test_set_12)^2, na.rm = TRUE))
+print(paste("12-step ahead RMSE:", rmse_12))
+```

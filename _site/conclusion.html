@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.41">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>DSAN 5600 lab0 – Conclusion</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">DSAN 5600 lab0</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./aboutme.qmd"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./introduction.html"> 
+<span class="menu-text">Introduction</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./ds.html"> 
+<span class="menu-text">Data Sources</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./dv.html"> 
+<span class="menu-text">Data Visualization</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./eda.html"> 
+<span class="menu-text">Exploratory Data Analysis</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./utsm.html"> 
+<span class="menu-text">Univariate TS Models (ARIMA/SARIMA)</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mtsm.html"> 
+<span class="menu-text">Multivariate TS Models (ARIMAX/SARIMAX/VAR)</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./ftsm.html"> 
+<span class="menu-text">Financial Time Series Models (ARCH/GARCH)</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./dp.html"> 
+<span class="menu-text">Deep Learning for TS</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./other.html"> 
+<span class="menu-text">Other: Interrupted TS/ARFIMA/ Spectral Analysis</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./conclusion.html" aria-current="page"> 
+<span class="menu-text">Conclusion</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#guid-question" id="toc-guid-question" class="nav-link active" data-scroll-target="#guid-question">Guid Question</a>
+  <ul class="collapse">
+  <li><a href="#price-trends" id="toc-price-trends" class="nav-link" data-scroll-target="#price-trends">Price trends</a></li>
+  <li><a href="#external-drivers-and-demand-effects" id="toc-external-drivers-and-demand-effects" class="nav-link" data-scroll-target="#external-drivers-and-demand-effects">External drivers and demand effects</a></li>
+  <li><a href="#co-movement-interactions" id="toc-co-movement-interactions" class="nav-link" data-scroll-target="#co-movement-interactions">Co-movement &amp; interactions</a></li>
+  <li><a href="#volatility-risk-profile" id="toc-volatility-risk-profile" class="nav-link" data-scroll-target="#volatility-risk-profile">Volatility &amp; Risk Profile</a></li>
+  <li><a href="#forecasting-decision-support" id="toc-forecasting-decision-support" class="nav-link" data-scroll-target="#forecasting-decision-support">Forecasting &amp; Decision Support</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a>
+  <ul class="collapse">
+  <li><a href="#strategies" id="toc-strategies" class="nav-link" data-scroll-target="#strategies">Strategies</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Conclusion</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="picture/bigpicture.jpg" class="img-fluid figure-img"></p>
+<figcaption>bigpicture</figcaption>
+</figure>
+</div>
+<section id="guid-question" class="level1">
+<h1>Guid Question</h1>
+<p>This guide question contains almost all of the elements of natural gas price research, and readers can gain a more detailed understanding of natural gas price changes and forecasts by following these questions</p>
+<section id="price-trends" class="level2">
+<h2 class="anchored" data-anchor-id="price-trends">Price trends</h2>
+<p><strong>Qeustion 1: What are the long-term trends in natural gas prices?</strong></p>
+<p><strong>Question 2: What are the major volatility cycles or event-driven cycles in NG=F continuous futures prices?</strong></p>
+<p>From the time series chart we can get the following information, in the last 10 years there are two peaks in natural gas futures prices, concentrated in 2014, and between 2022 and 2023, the main reason for this is that in 2014 the United States was in the middle of the expansion of the shale gas revolution, which meant an increase in production, but probably due to the lack of related facilities and less efficient transportation, which led to a higher price. between 2022 and The peak in 2023 is characterized by rain Russia-Ukraine conflict breaking out, leading to a supply crisis in Europe for natural gas, and the U.S. exporting large quantities of natural gas leading to a shortage of indigenous supply leading to higher prices</p>
+</section>
+<section id="external-drivers-and-demand-effects" class="level2">
+<h2 class="anchored" data-anchor-id="external-drivers-and-demand-effects">External drivers and demand effects</h2>
+<p><strong>Question 3: What is the linkage between oil prices and natural gas prices?</strong></p>
+<p><strong>Question 4: How does underground gas storage affect price volatility?</strong></p>
+<p><strong>Question 5: How does natural gas consumption affect prices?</strong></p>
+<p>Based on the time series and Arima forecast of oil and nutural gas price the rise and fall of international oil prices often “drive” synchronized changes in natural gas prices: when the price of crude oil rises sharply, the market bargaining power of natural gas as an alternative or complementary fuel increases, leading to similar increases and decreases in the price of gas during periods of sharp fluctuations in the oil market</p>
+<p>When storage are high, the market is well supplied and prices are relatively stable; when storage fall to low levels, any sudden drop in temperature or supply disruption can amplify price volatility. Maintaining moderate storage can buffer against unexpected demand and improve market stability</p>
+<p>There is a positive correlation between natural gas consumption and price, so if consumption increases, then natural gas inventories will decrease, which will cause the price of natural gas to spike.</p>
+</section>
+<section id="co-movement-interactions" class="level2">
+<h2 class="anchored" data-anchor-id="co-movement-interactions">Co-movement &amp; interactions</h2>
+<p><strong>Question 6: How do macroeconomic indicators (e.g., GDP growth) interact with natural gas prices?</strong></p>
+<p><strong>Question 7: Do electricity gas price fluctuations look ahead or synchronize with natural gas prices?</strong></p>
+<p>Natural gas prices have similar fluctuations as oil prices, but GDP shows a trend of growth, when we add GDP and oil to the forecast of natural gas prices, the forecast shows that natural gas gets a rapid growth trend in the near future, indicating that the growth of GDP has a significant impact on natural gas prices.</p>
+<p>By analyzing natural gas prices for electricity generation, we find that electricity prices and natural gas prices move in tandem-when electricity prices rise or fall, natural gas prices follow at the same time. It also affects the price of electricity</p>
+<p>Power generation gas synchronization is the strongest, when the summer peak or winter thermal power load increase, the collective purchasing of natural gas by power plants caused an immediate increase in prices; and in the heating off-season and parity power supply period, the price of gas for power generation and the overall market price synchronization down</p>
+</section>
+<section id="volatility-risk-profile" class="level2">
+<h2 class="anchored" data-anchor-id="volatility-risk-profile">Volatility &amp; Risk Profile</h2>
+<p><strong>Question 8: By fitting a GARCH model to WTI crude oil, can you predict the volatility of Natural gas Price?</strong> The mean value of future oil price returns predicted by the GARCH model is close to 0, implying that oil price levels are not expected to rise or fall dramatically in the short term. Since natural gas and crude oil prices have historically been highly interlinked, it is reasonable to assume that - in the absence of unforeseen influences - short-term volatility in the natural gas market will also remain mild and stable, with relatively manageable price fluctuations.</p>
+</section>
+<section id="forecasting-decision-support" class="level2">
+<h2 class="anchored" data-anchor-id="forecasting-decision-support">Forecasting &amp; Decision Support</h2>
+<p><strong>Question 9: What did you find when comparing the different model predictions of natural gas prices?</strong> Comparing the arima model and the VAR model, the future trend of natural gas is smooth in the prediction of the arima model, on the contrary, the natural gas price predicted by us using the VAR model shows an upward trend. This shows that the var model is more accurate than the arima model because other factors such as oil prices, GDP, etc. are added, and the increase or decrease of these variables directly affects the price of natural gas.</p>
+</section>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>This analysis is about Natural Gas Price Changes in U.S, Why am I interested in this topic? The reason is that I observed in China that there are a lot of trucks using natural gas, a clean energy source, instead of diesel trucks, and I asked some truckers who told me that natural gas surprisingly costs more than 20% less than diesel for the same mileage, making it more cost-effective than diesel. I was curious how the price of natural gas would change in the U.S., the world’s largest consumer.</p>
+<p>To answer this question, I collected data on natural gas prices, oil prices (NG=F) from yahoo finance, consumption, storage, and production from the EIA, and U.S. Gross Domestic Product (GDP) from Fred, thus building a univariate TS model and a multivariate TS model to understand how natural gas prices change in the changes in the time series.</p>
+<p>Our analysis of natural gas prices, natural gas consumption, natural gas exports by country, natural gas storage and WTI visualization shows that natural gas prices fluctuate significantly between 2014 and 2022, mainly due to the fact that in 2014 the United States is in the midst of the expansion of the shale gas revolution, which implies an increase in production, but probably due to a lack of facilities and inefficient transportation. The peak period between 2022 and 2023 is characterized by a gas supply crisis in Europe due to the outbreak of the Russian-Ukrainian conflict and high gas exports from the United States, leading to higher gas prices. The consumption of natural gas is mainly for electricity generation and the main exporters of natural gas are France and the Netherlands. Natural gas reserves have been on the rise, especially after 2022, when most countries will have to import gas from the United States because of the Russian-Ukrainian conflict, which has led to a break in Europe’s gas supply. WTI’s stock market price falls off a cliff in 2020, which is related to Covid-19, and another peak is in 2022, which is also due to the Russian-Ukrainian conflict, leading to a rise in the oil price</p>
+<p>In order to investigate the forecasts affecting the changes in natural gas, we perform ARIMA/SARIMA forecasts for the variables related to natural gas production, price, consumption, reserves, and oil prices, respectively. The results show that natural gas production will continue to trend upward in the future.Oil prices and natural gas prices have strong synchronized fluctuations, and if U.S. oil prices rise, natural gas, as an alternative energy source, will lead to large imports of natural gas from other countries to the U.S., leading to a reduction in indigenous supply and thus higher natural gas prices. Natural gas consumption shows a slowly declining seasonal trend which is related to indigenous consumption, as the winter season has just ended, so residential natural gas consumption is lower. Reserve forecasts show a slow upward trend due to the fact that the Russia-Ukraine conflict has not yet ended, so many countries still need to import natural gas from the U.S. Overall the natural gas prices in the US will remain the same in the future and there will not be much of a price increase factor, but if the Russian-Ukrainian conflict ends in the future, other countries may still import natural gas from Russia so this is an important event that will affect the price of natural gas. I tried multivariate predictions related to natural gas and they all showed that natural gas would not grow significantly in the next 6 months, which is essentially the same as the univariate predictions of natural gas prices.</p>
+<p>In our ARCH/GARCH analysis of natural gas, we attempted to use the WTI data for forecasting purposes and used the results to predict future changes in natural gas. The results show that the mean value of the future oil price returns predicted by the GARCH model is close to 0, implying that the level of oil prices will not rise or fall significantly in the short term. Since natural gas and crude oil prices have historically been highly correlated, it is reasonable to assume that short-term volatility in the natural gas market will also remain moderate and stable, with relatively manageable price fluctuations in the absence of unforeseen effects.</p>
+<section id="strategies" class="level2">
+<h2 class="anchored" data-anchor-id="strategies">Strategies</h2>
+<p>According to the forecast results, natural gas prices are not expected to rise significantly in the short term, and the market overall remains relatively stable. In this context, it is recommended that procurement strategies prioritize a phased and demand-driven approach, avoiding one-time bulk purchases or panic buying. With limited upward momentum in prices, companies may adopt a rolling procurement strategy—replenishing supply monthly or quarterly based on actual needs—to reduce cash flow pressure and retain flexibility to respond to market fluctuations.</p>
+<p>For inventory management, it is advisable to maintain a reasonable and secure level of stock rather than accumulate excessive reserves. Based on historical average usage and volatility, companies should establish an upper inventory limit and define replenishment thresholds to ensure supply stability while controlling holding costs.</p>
+<p>Regarding hedging and contract strategies, it is not recommended to enter long-term fixed-price agreements at this stage. Instead, firms can prioritize index-linked or short-term adjustable contracts that offer greater price flexibility. If there are moderate concerns about future volatility, a small portion of risk-hedging tools such as options may be considered to cap potential cost exposure during unexpected events.</p>
+<p>Overall, this period of price stability provides a relatively low-risk window for operational decision-making. Companies should implement prudent resource allocation strategies to ensure supply while avoiding overcommitting to potentially unfavorable pricing. It is also a good opportunity to review past procurement decisions during high-volatility periods and prepare for possible price rebounds in the future.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

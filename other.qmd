@@ -1,0 +1,152 @@
+---
+title: "Other: Interrupted TS/ARFIMA/Spectral Analysis"
+format: html
+---
+
+# **Interrupted Time Series Analysis Using Your Project Data**
+
+## **Objective:**
+
+Using a variable from your current project dataset that may have been affected by **COVID-19** or a **policy intervention**, you will perform an **interrupted time series (ITS) analysis** to assess the nature of the intervention’s effect. You’ll determine if the effect is **immediate**, **sustained**, or **delayed**, and interpret both the statistical model and the counterfactual outcomes.
+
+## Instructions
+
+```{r}
+library(quantmod)
+library(ggplot2)
+library(dplyr)
+library(knitr)
+```
+
+### Step 1
+
+The WTI crude oil price is a strong candidate for ITS analysis because it experienced a significant disruption during the COVID-19 pandemic, particularly with the global shutdown of travel and reduced energy demand. The sudden and sharp changes in oil prices around early 2020 represent a clear intervention point, making it ideal for examining shifts in level and trend before and after the pandemic onset.
+
+### Step 2
+
+```{r}
+
+wti_xts <- getSymbols("CL=F", src = "yahoo",from = "2018-01-01", to = "2023-12-31", 
+                      auto.assign = FALSE)
+
+
+df_wti <- data.frame(Date      = index(wti_xts),WTI_Price = as.numeric(wti_xts[, "CL=F.Close"]))
+df_wti <- na.omit(df_wti)
+
+intervention_date <- as.Date("2020-03-11")
+
+ggplot(df_wti, aes(Date, WTI_Price)) +
+  geom_line(color = "blue") +
+  geom_vline(xintercept = intervention_date, color = "red", linetype = "dashed",size  = 1) +
+  labs(
+    title = "WTI Crude Oil Price Over Time with COVID-19 Intervention",
+    x     = "Date",
+    y     = "WTI Price (USD/barrel)"
+  ) +
+  theme_minimal()
+```
+
+### Step 3
+
+```{r}
+start_date <- min(df_wti$Date)
+int_date   <- intervention_date
+
+its_data <- df_wti %>%
+  arrange(Date) %>%
+  mutate(
+    Xt = as.numeric(Date - start_date),              
+    Zt = if_else(Date >= int_date, 1, 0),            
+    Pt = if_else(Date >= int_date,
+                 as.numeric(Date - int_date),       
+                 0)
+  )
+
+kable(head(its_data), 
+      col.names = c("Date", "WTI_Price", "Xt", "Zt", "Pt"),
+      digits = 0)
+```
+
+### Step 4
+
+```{r}
+model <- lm(WTI_Price ~ Xt + Zt + Pt, data = its_data)
+summary(model)
+```
+
+### Step 5
+
+```{r}
+
+its_data <- its_data %>%
+  mutate(
+    predicted      = predict(model, newdata = .),
+    counterfactual = predict(model,
+                             newdata = mutate(., Zt = 0, Pt = 0))
+  )
+```
+
+```{r}
+ggplot(its_data, aes(x = Date)) +
+  geom_line(aes(y = WTI_Price), color = "black", size = 0.6) +
+  geom_line(aes(y = predicted),   color = "blue",  size = 0.8) +
+  geom_line(aes(y = counterfactual),
+            color = "red", linetype = "dashed", size = 0.8) +
+  geom_vline(xintercept = intervention_date,
+             color = "darkgray", linetype = "dotted", size = 1) +
+  labs(
+    title   = "Interrupted Time Series: Actual, Predicted, and Counterfactual WTI Price",
+    x       = "Date",
+    y       = "WTI Price (USD per barrel)",
+    caption = "Black = Actual; Blue = Predicted; Red dashed = Counterfactual"
+  ) +
+  theme_minimal()
+  
+```
+
+```{r}
+coef_tbl <- summary(model)$coefficients
+print(coef_tbl)
+
+
+cat("
+Coefficient interpretations:
+• (Intercept) = ", round(coef_tbl["(Intercept)","Estimate"],2), "
+  → At time zero (the very first day), the model predicts a baseline WTI price of about $", round(coef_tbl["(Intercept)","Estimate"],2), " per barrel.
+
+• Xt = ", round(coef_tbl["Xt","Estimate"],4), "
+  → Before intervention, each additional day is associated with a change of $", round(coef_tbl["Xt","Estimate"],4),
+" in baseline price (negative means a small daily decline).
+
+• Zt = ", round(coef_tbl["Zt","Estimate"],2), "
+  → At the intervention date, there is an immediate shift of $", round(coef_tbl["Zt","Estimate"],2),
+" per barrel (negative means an immediate drop).
+
+• Pt = ", round(coef_tbl["Pt","Estimate"],4), "
+  → After intervention, the daily trend changes by $", round(coef_tbl["Pt","Estimate"],4),
+" on top of the baseline trend (positive means a steeper recovery slope).
+")
+```
+
+### Step 6
+**Immediate Effect:**
+
+the coefficient of Zt: Estimate = -8.8994, p = 6.04 × 10-¹⁰, On the day of the intervention and after 2020-03-11, WTI prices instantaneously fall by about $8.90/bbl compared to the no-intervention scenario, and this is highly significant.
+
+**Sustained Effect**
+
+Coefficient of Pt: Estimate = +0.05744, p < 2 × 10-¹⁶,After the intervention, the price rises additionally by about $0.0574 per day.Before the intervention, the baseline slope is dominated by Xt = -0.0188 (a slight daily decline); after the intervention, the net slope becomes
+-0.0188 + 0.0574 = +0.0386\ (\text{$/day})
+
+**Counterfactual**
+
+If the epidemic had never occurred (Zt = 0, Pt = 0), prices would have been slowly declining along the pre-intervention slight downtrend (-$0.0188/day).
+The gap between the actual forecast (with immediate decline and subsequent rise) and the counterfactual curve, which gradually separates after the intervention day, is the cumulative impact of the epidemic and related policies.
+
+**Delayed Effect**
+
+For example, on day 30 after the intervention, the difference = Zt + Pt × 30 ≈ -8.8994 + 0.05744 × 30 ≈ -7.18
+
+Explanation: At day 30, the model predicts that the price is still about $7.18 below the counterfactual.
+To “get back” to the counterfactual level, it would take about $\frac{8.8994}{0.05744} \approx 155\ \text{day}$
+Which means it would take about 155 days after the outbreak for the price to recover to the level it would have been had there been no intervention.

@@ -1,0 +1,615 @@
+---
+title: "Exploratory data analysis"
+author: "Ke Tian"
+format: html
+---
+
+# Introduction
+
+In this exploratory data analysis (EDA), we examine two datasets related to natural gas prices and production trends. Our goal is to uncover patterns, trends, and statistical properties of the data, providing insights into price fluctuations, long-term trends, and seasonal variations. We employ various visualization techniques, decomposition methods, and statistical tests to assess the characteristics of the time series data.
+
+# Natural Gas Production
+
+Here is the top 10 World Natural Gas Production.
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(TTR)
+library(forecast)
+library(ggpubr)
+library(tseries)
+library(zoo)
+library(readr)
+library(ggplot2)
+library(plotly)
+```
+
+```{r}
+
+df <- read_csv("fossil-fuel-production.csv")
+
+colnames(df) <- trimws(colnames(df)) 
+
+colnames(df) <- gsub("–", "-", colnames(df))
+
+
+df_gas <- df %>%
+  select(Entity, Year, contains("Gas production")) %>%
+  rename(Production = contains("Gas production")) %>%
+  filter(!is.na(Production))
+df_gas$Year <- as.numeric(df_gas$Year)
+
+exclude_list <- c("World", "OECD", "Non-OECD", "North America", "Europe", 
+                  "Asia", "High-income countries", "Upper-middle-income countries",
+                  "USSR", "CIS (EI)", "Middle East", "Africa", "Asia Pacific")
+
+df_gas <- df_gas %>%
+  filter(!Entity %in% exclude_list &  # remove the union
+         !grepl("\\(EI\\)", Entity))
+
+
+df_gas <- df_gas %>%
+  group_by(Year) %>%
+  arrange(Year, desc(Production)) %>%
+  slice_max(Production, n = 10) %>%
+  ungroup()
+
+fig <- plot_ly(df_gas, 
+               x = ~Production, 
+               y = ~reorder(Entity, Production), 
+               color = ~Entity, 
+               frame = ~Year, 
+               type = 'bar') %>%
+  layout(title = "Top 10 Natural Gas Producing Countries Over Time",
+         xaxis = list(title = "Gas Production (TWh)"),
+         yaxis = list(title = "Country"),
+         updatemenus = list(
+           list(type = "buttons",
+                x = 1.15,
+                y = 1,
+                buttons = list(
+                  list(label = "Play",
+                       method = "animate",
+                       args = list(NULL, list(frame = list(duration = 500, redraw = TRUE),
+                                              fromcurrent = TRUE, mode = "immediate"))),
+                  list(label = "Pause",
+                       method = "animate",
+                       args = list(NULL, list(frame = list(duration = 0, redraw = FALSE),
+                                              mode = "immediate")))
+                ))))
+fig
+```
+
+## Natural Gas Production Time Series Plot
+
+```{r}
+us_gas <- df_gas %>% filter(Entity == "United States")
+
+ts_us_gas <- ts(us_gas$Production, start = min(us_gas$Year), frequency = 10)
+
+ggplot(us_gas, aes(x = Year, y = Production)) +
+  geom_line(color = "blue", size = 1) +
+  labs(title = "US Natural Gas Production Over Time",
+       x = "Year",
+       y = "Production (TWh)")
+
+```
+
+For this time series plot, we can see that natural gas production in the United States was relatively stable or even declined between 1970 and 1990, but from around 2005 onwards, natural gas grew particularly fast, especially after 2010 when the growth trend accelerated. This suggests that the fluctuations in the data were small before 1990, while the volatility increased significantly after 2005, and there is no obvious repeating cycle in the graph, suggesting that the seasonality is not obvious. This growth is more in line with the multiplicative model
+
+## Lag Plot
+
+```{r}
+lag.plot(ts_us_gas, lags = 12, layout = c(3,4))
+```
+
+Many of the data points in the lag plot are arranged along a dotted line at a 45° angle, indicating strong autocorrelation of the data, and the data is non-random and has a clear trend, which means that Detrending or Differencing may be required to smooth the data.
+
+## Decomposition
+
+```{r}
+stl_decomp <- stl(ts_us_gas, s.window = "periodic")
+plot(stl_decomp)
+```
+
+From the decomposition charts, the trend of the time series data shows a clear long-term increase, especially in the last few years. In addition, the seasonality is more pronounced, showing cyclical fluctuations, which suggests that natural gas production may be affected by annual cycles. The residuals are somewhat stochastic, suggesting that there are other unexplained random variations in addition to the trend and seasonality.The magnitude of seasonal fluctuations varies with the trend, suggesting that the time series is more in line with the multiplicative model.
+
+## ACF & PACF
+
+```{r}
+# ACF & PACF
+par(mfrow=c(1,2))
+acf(ts_us_gas, main="ACF - US Natural Gas Production")
+pacf(ts_us_gas, main="PACF - US Natural Gas Production")
+```
+
+From the ACF and PACF plots, it can be seen that there is significant autocorrelation in the time series, with the ACF decreasing gradually and the PACF decaying rapidly after being significant at lag 1, suggesting that the data may be trending and exhibiting non-stationary characteristics.
+
+## Test
+
+### Augmented Dickey-Fuller Test
+
+```{r}
+# test
+adf_test <- adf.test(ts_us_gas)
+print(adf_test)
+```
+
+The p-value = 0.99 is much higher than the significance level of 0.05, indicating that the original hypothesis cannot be rejected
+
+### Augemente Diceky-Fuller Test of Differece data
+
+```{r}
+ts_us_gas_diff <- diff(ts_us_gas)
+adf.test(ts_us_gas_diff)
+```
+
+## ACF & PACF of Second Order Differenced Data
+
+```{r}
+par(mfrow = c(1,2))
+acf(ts_us_gas_diff, main = "ACF - First Order Differenced Data")
+pacf(ts_us_gas_diff, main = "PACF - First Order Differenced Data")
+```
+
+## Moving Average Smoothing
+
+```{r}
+ts_us_gas_diff2 <- diff(ts_us_gas_diff)
+
+
+adf_test_diff2 <- adf.test(ts_us_gas_diff2)
+print(adf_test_diff2)
+
+par(mfrow = c(1,2))
+acf(ts_us_gas_diff2, main = "ACF - Second Order Differenced Data")
+pacf(ts_us_gas_diff2, main = "PACF - Second Order Differenced Data")
+```
+
+## 
+
+```{r}
+us_gas$MA_5 <- SMA(us_gas$Production, n = 5)
+us_gas$MA_10 <- SMA(us_gas$Production, n = 10) 
+
+ggplot(us_gas, aes(x = Year)) +
+  geom_line(aes(y = Production, color = "Original"), size = 1) +
+  geom_line(aes(y = MA_5, color = "5-Year MA"), size = 1, linetype = "dashed") +
+  geom_line(aes(y = MA_10, color = "10-Year MA"), size = 1, linetype = "dotted") +
+  labs(title = "US Natural Gas Production - Moving Average Smoothing",
+       x = "Year",
+       y = "Production (TWh)",
+       color = "Legend")
+```
+
+Both the short-term (5-year) and long-term (10-year) moving average smoothing lines exhibit an upward long-term trend, suggesting that natural gas production has grown significantly in recent decades. the 5-year MA is more sensitive and suitable for analyzing short- and medium-term fluctuations, while the 10-year MA is more suitable for long-term trend observations.
+
+# Natural Gas Price
+
+```{r}
+library(quantmod)
+library(forecast)
+library(tseries)
+library(ggplot2)
+
+getSymbols("NG=F", from = "2010-01-01", src = "yahoo")
+natgas <- Cl(`NG=F`)
+
+natgas_df <- data.frame(date = index(natgas),price = coredata(natgas))
+
+colnames(natgas_df) <- c("date", "price")
+
+```
+
+## Time Series Plot
+
+```{r}
+fig <- plot_ly(
+  data = natgas_df,
+  x = ~date,
+  y = ~price,
+  type = 'scatter',
+  mode = 'lines',
+  line = list(width = 1.5),
+  hoverinfo = "x+y",
+  name = "Natural Gas Price"
+) %>%
+  layout(
+    title = "Henry Hub Natural Gas Futures Price (NG=F)",
+    xaxis = list(title = "Date"),
+    yaxis = list(title = "Price (USD)"),
+    hovermode = "closest"
+  )
+
+fig
+```
+
+According to the time series chart, we can see that the overall price trend of natural gas is in a “U” shape, with prices oscillating downward from 2010 to 2020, soaring sharply from 2021 to 2022 due to energy tensions and geopolitical conflicts, and then declining after 2023, but still at a high level of volatility. A certain amount of seasonal volatility can be observed in the graph, especially during the winter peak demand period for natural gas, when prices often show an upward trend. At the same time, price fluctuations are clearly cyclical, but do not have a fixed cycle length, reflecting their influence by market supply and demand, policies, international events and other factors. In addition, there is also a significant increase in volatility during periods of high price levels and less volatility at low prices, suggesting that the time series is more suitable for analysis using a multiplicative model. Overall, the series contains long-term trends, non-stationary cyclical fluctuations, and irregular short-term shocks.
+
+## Lag Plot
+
+```{r}
+clean_price <- na.omit(natgas_df$price)
+ts_natgas <- ts(clean_price)
+
+lag.plot(ts_natgas, lags = 12, layout = c(3, 4),
+         main = "Lag Plots of Natural Gas Prices")
+
+```
+
+It can be observed from the lag plot that the natural gas price series shows obvious linear positive correlation in the first few lag orders, indicating that the time series has strong short-term autocorrelation. As the lag order increases, the correlation gradually weakens, and the correlation tends to dissipate at lag order 12. The overall lag plot shows a stable diagonal band structure with low volatility.
+
+## Decomposition Plot
+
+```{r}
+xts_monthly <- apply.monthly(
+  xts(natgas_df$price, order.by = natgas_df$date),
+  mean
+)
+xts_monthly <- na.omit(xts_monthly)
+
+first_date   <- index(xts_monthly)[1]
+start_year   <- as.integer(format(first_date, "%Y"))
+start_month  <- as.integer(format(first_date, "%m"))
+
+ts_natgas_monthly <- ts(coredata(xts_monthly), 
+                        start = c(start_year, start_month), 
+                        frequency = 12)
+
+decomp_add <- decompose(ts_natgas_monthly, type = "additive")
+plot(decomp_add)
+
+decomp_mult <- decompose(ts_natgas_monthly, type = "multiplicative")
+plot(decomp_mult)
+```
+
+An additive and multiplicative decomposition of natural gas prices reveals that the multiplicative model is more consistent with the data characteristics. Specifically, the seasonal and stochastic volatility amplitudes of natural gas prices expand in tandem as the trend rises, suggesting a multiplicative character to the volatility. In contrast, the residual term in the additive model amplifies in the later stages and does not explain the seasonal dynamics under trend level changes well.
+
+## ACF & PACF
+
+```{r}
+ggAcf(ts_natgas_monthly, lag.max = 36) + ggtitle("ACF of Monthly Natural Gas Prices")
+
+ggPacf(ts_natgas_monthly, lag.max = 36) + ggtitle("PACF of Monthly Natural Gas Prices")
+```
+
+The PACF plot shows significant biased autocorrelation between lag 1 and order 3, followed by a rapid decay to within the confidence interval, exhibiting typical truncation characteristics, while the ACF plot shows a slow decaying trend without a significant truncation at a certain order, suggesting that there is a trend or seasonality in the series and that it is a non-stationary series. So I think the series is non-stationary
+
+## **Augmented Dickey-Fuller Test**
+
+```{r}
+adf.test(ts_natgas_monthly)
+```
+
+The Augmented Dickey-Fuller test shows that the original natural gas price time series has a p-value of 0.08887, which fails to reject the original hypothesis of the existence of a unit root (at a significance level of 0.05), suggesting that the series is non-stationary. This is consistent with the trend and long lag correlation observed earlier through the ACF/PACF plots, and supports the judgment of the non-stationarity of the series in part (5).
+
+## Stationarity
+
+```{r}
+price_ts_diff <- diff(ts_natgas_monthly)
+price_ts_diff <- na.omit(price_ts_diff)
+
+ggAcf(price_ts_diff, lag.max = 36) +
+  ggtitle("ACF of Differenced Natural Gas Prices")
+```
+
+After the first-order differencing of the natural gas price series, its ACF plot shows that the correlation of the lagged term decays rapidly, with a slightly significant autocorrelation around Lag 1. However, most of the lags fall within confidence intervals, and do not show persistent or cyclical characteristics. This indicates that the differencing has successfully removed the trend component of the series and transformed it into a smooth series
+
+# Natural Gas Consumption
+
+## Natural Gas Consumption Over Time
+
+### Data Clean
+
+```{r}
+df_consumption <- read.csv("Natural_Gas_Summary.csv",skip = 6) %>%
+  filter(!is.na(Month)) %>%
+  mutate(
+    Year      = as.numeric(sub(".* ([0-9]{4})$", "\\1", Month)),
+    Month_Num = match(substr(Month, 1, 3), month.abb)
+  ) %>%
+  arrange(Year, Month_Num)
+
+df_cons <- df_consumption %>% 
+  select(Month, Year, Month_Num,
+         `U.S..Natural.Gas.Total.Consumption..MMcf..MMcf`) %>% 
+  rename(TotalConsumption = `U.S..Natural.Gas.Total.Consumption..MMcf..MMcf`) %>%
+  mutate(
+    TotalConsumption = as.numeric(TotalConsumption),          
+    Date = as.Date(sprintf("%d-%02d-01", Year, Month_Num))         
+  )
+
+first_valid_index <- which(!is.na(df_cons$TotalConsumption))[1]
+
+start_year <- df_cons$Year[first_valid_index]
+start_month <- df_cons$Month_Num[first_valid_index]
+
+ts_trimmed <- ts(na.omit(df_cons$TotalConsumption),
+                 start = c(start_year, start_month),
+                 frequency = 12)
+
+```
+
+### Time Series Plot
+
+```{r}
+ggplot(df_cons %>% filter(!is.na(TotalConsumption)), aes(x = Date, y = TotalConsumption)) +
+  geom_line(color = "blue", size = 1) +
+  labs(title = "U.S. Total Natural Gas Consumption Over Time",
+       x = "Year", y = "Consumption (MMcf)")
+```
+
+Through the time series plot we can see that the range of fluctuations in peaks and valleys around 2000 is relatively small, probably because natural gas has just become popular as a new energy source, and in the later period around 2020 the fluctuations become violent and peaks are higher, suggesting that the seasonal amplitude widens with the rise in the overall level, which is a characteristic of multiplicative structures
+
+## Lag Plot
+
+```{r}
+lag.plot(ts_trimmed, lags = 12, layout = c(3,4))
+```
+
+From the lag plot, it can be seen that Lag 1 and Lag 12 show a clear linear relationship with the current values, with the points mainly concentrated on the diagonal line, suggesting that the series has a strong short-term dependence and seasonal cyclicity.The correlation of Lag 1 suggests that the natural gas consumption in the current month is largely affected by the previous month, while the correlation of Lag 12 suggests that there is an annually recurring pattern of consumption, with highly similar values between the same months of the year. The Lag 12 correlation suggests an annual repetitive pattern of consumption, with highly similar values between the same months of the year.
+
+## Decomposition
+
+```{r}
+# additive
+decomp_add <- decompose(ts_trimmed, type = "additive")
+autoplot(decomp_add) + ggtitle("Additive Decomposition")
+
+# multiple
+decomp_mul <- decompose(ts_trimmed, type = "multiplicative")
+autoplot(decomp_mul) + ggtitle("Multiplicative Decomposition")
+```
+
+From the decomposition chart, we can observe that the seasonal fluctuation of the additive model is of fixed magnitude, which cannot explain the phenomenon that the magnitude of fluctuation increases when the consumption level rises; the seasonality of the multiplicative model is in the form of proportionality, which is more in line with the actual performance; moreover, the fluctuation of the residuals in the multiplicative model is smaller and more stable, which indicates that its fitting effect is better. Therefore, we choose the multiplicative model as the subsequent modeling and analysis.
+
+## ACF & PACF
+
+```{r}
+p_acf  <- ggAcf(ts_trimmed, lag.max = 48) + ggtitle("ACF of Natural Gas Consumption")
+p_pacf <- ggPacf(ts_trimmed, lag.max = 48) + ggtitle("PACF of Natural Gas Consumption")
+
+
+p_acf
+p_pacf
+```
+
+From the ACF plot, it can be seen that the series has extremely strong autocorrelation at Lag 1 and Lag 12, indicating that natural gas consumption not only has significant short-term dependence, but also exhibits obvious annual cyclicality. In addition, the slow decay of the autocorrelation function indicates that the series has trend or non-stationary characteristics.
+
+In the PACF plot, Lag 1 is the most significant partial autocorrelation term, followed by several lagged terms with different degrees of significance, suggesting that the series may contain a more complex AR structure, and is also affected by seasonality.
+
+Combining the ACF and PACF, it can be preliminarily judged that the series is a non-stationary series.
+
+## Augmented Dickey-Fuller Test
+
+```{r}
+adf_result <- adf.test(ts_trimmed)
+print(adf_result)
+```
+
+p-value = 0.01 \< 0.05, so the original hypothesis of “unit root (non-stationary)” is rejected at the 5% significance level, and the series is apparently stationary. This is inconsistent with the “non-stationary” conclusion observed in step (5) by the ACF trailing and PACF seasonal peaks.
+
+## Stationarity
+
+```{r}
+ts_diff1 <- diff(ts_trimmed, differences = 1)
+
+adf_diff1 <- adf.test(ts_diff1)
+print(adf_diff1)
+
+ggAcf(ts_diff1, lag.max = 48) +
+  ggtitle("ACF of First Differenced Series")
+```
+
+The p-value of the ADF test after differencing has dropped to 0.01 (\< 0.05), indicating that we reject the original hypothesis of a unit root at the 5% significance level, i.e., the series after first-order differencing has become smooth. The remaining Lag 12, 24... peaks suggest that there is still annual seasonality and seasonal differencing is needed.
+
+```{r}
+ts_diff_seasonal <- diff(ts_diff1, lag = 12)
+ggAcf(ts_diff_seasonal, lag.max = 48) +
+  ggtitle("ACF of Seasonally First Differenced Series")
+```
+
+# Natural Gas Storage
+
+## Natural Gas Storage Time Series
+
+### Data Clean
+
+```{r}
+df_storage <- read.csv("Natural_Gas_Summary.csv", skip = 6)%>%
+  filter(!is.na(Month)) %>%
+  mutate(
+    Year      = as.numeric(sub(".* ([0-9]{4})$", "\\1", Month)),
+    Month_Num = match(substr(Month, 1, 3), month.abb)
+  ) %>%
+  arrange(Year, Month_Num)
+
+df_store <- df_storage %>%
+  select(
+    Month,
+    Year,
+    Month_Num,
+    `U.S..Total.Natural.Gas.in.Underground.Storage..Base.Gas...MMcf..MMcf`
+  ) %>%
+  rename(TotalStorage = `U.S..Total.Natural.Gas.in.Underground.Storage..Base.Gas...MMcf..MMcf`) %>%
+  mutate(
+    TotalStorage = as.numeric(TotalStorage),
+    Date         = as.Date(sprintf("%d-%02d-01", Year, Month_Num))
+  )
+
+
+first_valid_index <- which(!is.na(df_store$TotalStorage))[1]
+start_year  <- df_store$Year[first_valid_index]
+start_month <- df_store$Month_Num[first_valid_index]
+
+ts_storage <- ts(
+  na.omit(df_store$TotalStorage),
+  start     = c(start_year, start_month),
+  frequency = 12
+)
+
+```
+
+### Natural Gas storage Time Series Plot
+
+```{r}
+ggplot(df_store %>% filter(!is.na(TotalStorage)), aes(x = Date, y = TotalStorage)) +
+  geom_line(color = "darkgreen", size = 1) +
+  labs(
+    title = "U.S. Total Natural Gas Base Storage Over Time",
+    x     = "Year",
+    y     = "Base Storage (MMcf)"
+  )
+```
+
+From the natural gas reserves map, before 1995, the reserves of natural gas in two stages of upward trend, before 1985 rose rapidly, in about 1985 a stable trend after 1990, natural gas production rose rapidly, until 1995, production has been stabilized, its seasonal fluctuations are almost none, so it and the price of natural gas have a relationship, but not seasonal . The seasonal component of the series is a fixed additive effect rather than a multiplicative effect of relative change, and thus is more consistent with the structural features of an additive model.
+
+## Lab Plot
+
+```{r}
+lag.plot(ts_storage, lags = 12, layout = c(3,4))
+```
+
+The lag plot shows that the U.S. natural gas base reserve series has significant linear autocorrelation, and Lag 1 to Lag 12 all show highly concentrated diagonal distributions, indicating that changes in the series are characterized by strong short-term memory, and the trend is stable and highly predictable. At the same time, the point distribution is compact and the fluctuation amplitude is small, indicating that the variable is overall stable and lacks violent fluctuations or sudden changes. Since Lag 12 does not show an obvious cyclical structure, it indicates that the series is not highly seasonal and is dominated by the long-term trend.
+
+## Decomposition
+
+```{r}
+# additive
+decomp_add <- decompose(ts_storage, type = "additive")
+autoplot(decomp_add) + ggtitle("Additive Decomposition")
+
+# multiple
+decomp_mul <- decompose(ts_storage, type = "multiplicative")
+autoplot(decomp_mul) + ggtitle("Multiplicative Decomposition")
+```
+
+The main components of the U.S. natural gas base reserve series include a long-term rising trend term, a small stable seasonal term, and a relatively small and randomly distributed residual term. In the additive decomposition, the magnitude of seasonal fluctuations remains nearly constant throughout the time period, independent of trend changes, and the fluctuations in the residual term are relatively stable; in contrast, the multiplicative model, while formally usable, presents the seasonal term as a proportional change, which is inconsistent with actual observations, and the residual component is slightly amplified. Therefore, the additive model is more appropriate.
+
+## ACF & PACF
+
+```{r}
+p_acf  <- ggAcf(ts_storage, lag.max = 48) + ggtitle("ACF of Natural Gas Storage")
+p_pacf <- ggPacf(ts_storage, lag.max = 48) + ggtitle("PACF of Natural Gas Storage")
+
+
+p_acf
+p_pacf
+```
+
+The time series of natural gas reserves shows significant autocorrelation and trend, and the long tail of the ACF and the first-order spike structure of the PACF clearly indicate that the series is not smooth.
+
+## Augmented Dickey-Fuller Test
+
+```{r}
+adf_storage <- adf.test(ts_storage)
+print(adf_storage)
+```
+
+According to the Augmentd Dickey-Fuller Test, the p-value is greater than 0.05, so it is a non-stationary sequence, which is consistent with what we observed above with the ACF and PACF
+
+## Stationarity
+
+```{r}
+ts_storage_diff1 <- diff(ts_storage, differences = 1)
+ggAcf(ts_storage_diff1, lag.max = 48) +
+  ggtitle("ACF of First Differenced Storage Series")
+```
+
+In the ACF plot after differencing, there is a significant negative correlation spike in Lag 1 and a significant positive correlation peak in Lag 12, followed by most of the lags falling within the confidence intervals, with small fluctuations in the lagged terms, and rapid autocorrelation decay. This indicates that the data have stabilized
+
+# WTI Oil Price
+
+```{r}
+library(tidyquant)
+library(ggplot2)
+library(lubridate)
+oil_prices <- tq_get("CL=F",
+                     from = "2010-01-01",
+                     to = Sys.Date())
+
+head(oil_prices)
+
+ggplot(oil_prices, aes(x = date, y = adjusted)) +
+  geom_line(color = "steelblue", size = 1) +
+  labs(title = "WTI Crude Oil Prices (Yahoo Finance)",
+       x = "Date",
+       y = "Adjusted Price (USD/barrel)") +
+  theme_minimal()
+```
+
+A time series plot of WTI crude oil prices over the period 2010-2025 shows that the series has a significant long-term trend and irregular cyclical fluctuations, but does not have a stable seasonal structure. In addition, price volatility increases as the price level rises, especially during the 2020 outbreak and the 2022 energy crisis. This “higher price, higher volatility” phenomenon suggests that the series is multiplicative and therefore more suitable for modeling and decomposition analysis using multiplicative models.
+
+## Lag Plot
+
+```{r}
+clean_oil <- na.omit(oil_prices$adjusted)
+
+ts_oil <- ts(clean_oil)
+
+lag.plot(ts_oil, lags = 12, layout = c(3, 4),
+         main = "Lag Plots of WTI Crude Oil Prices")
+```
+
+From the 12 lags of WTI crude oil price, it can be observed that there is a strong linear relationship between the current value and its previous value, and the lags show a clear diagonal band structure. This indicates that the time series has a strong short-term memory and lag dependence. Since the lag plot does not show a random or centrosymmetric pattern, it suggests that the series is not white noise, but rather there is a trend with non-stationarity
+
+## Decomposition
+
+```{r}
+oil_xts <- xts(oil_prices$adjusted, order.by = oil_prices$date)
+
+monthly_oil <- apply.monthly(oil_xts, mean)
+
+monthly_oil <- na.omit(monthly_oil)
+
+start_year <- year(start(index(monthly_oil)))
+start_month <- month(start(index(monthly_oil)))
+
+ts_oil <- ts(coredata(monthly_oil),
+             start = c(start_year, start_month),
+             frequency = 12)
+# additive
+decomp_add <- decompose(ts_oil, type = "additive")
+plot(decomp_add)
+# multiplicative
+decomp_mult <- decompose(ts_oil, type = "multiplicative")
+plot(decomp_mult)
+```
+
+Decomposing the WTI crude oil price series with additive and multiplicative models respectively reveals that the multiplicative model performs better in terms of seasonality interpretation and residual stability. The residual term under the additive model amplifies dramatically when the trend is high, while the multiplicative model stabilizes the volatility and explains the extreme market volatility in 2020 more accurately by proportionality between seasonality and trend, so the multiplicative model is more suitable for this time series
+
+## ACF & PACF
+
+```{r}
+ggAcf(ts_oil, lag.max = 36) +
+  ggtitle("ACF of WTI Crude Oil Prices")
+
+ggPacf(ts_oil, lag.max = 36) +
+  ggtitle("PACF of WTI Crude Oil Prices")
+```
+
+From the ACF plot, we can see that the WTI crude oil price series has significant positive autocorrelation at several lags (Lag 1 to Lag 36) and shows a typical tail-dragging structure, which indicates that the series has strong trend and long-term dependence, and does not conform to the characteristics of a smooth series.The PACF plot, on the other hand, shows extremely high partial autocorrelation at the lagged order of Lag 1, with a significant edge at Lag 2\~3, and then rapidly decayed. The PACF plot shows that there is a very high partial autocorrelation at the lag 1 stage, with significant edges at Lag 2\~3, and then it decays rapidly.
+
+## Augmented Dickey-Fuller Test
+
+```{r}
+adf_result <- adf.test(ts_oil)
+print(adf_result)
+```
+
+Using the Augmented Dickey-Fuller Test (ADF Test) to test the smoothness of the WTI crude oil price series, the results show that the Dickey-Fuller statistic is -2.1451, with a p-value of 0.5156, which is much higher than the significance level of 0.05, and it fails to reject the hypothesis of unit root. Thus, it can be judged that the series is a non-stationary series. This result is consistent with the conclusion based on the ACF and PACF plots and trend analysis in part (5).
+
+## Stationarity
+
+```{r}
+ts_oil_diff <- diff(ts_oil)
+
+ts_oil_diff <- na.omit(ts_oil_diff)
+
+ggAcf(ts_oil_diff, lag.max = 36) +
+  ggtitle("ACF of Differenced WTI Crude Oil Prices")
+```
+
+The ACF plot of the WTI crude oil price series after first-order differencing shows that most of the lagged orders fall within the confidence intervals without any obvious periodicity or tail-dragging structure, except for the lagged order 1, where there is still a slight positive autocorrelation. The overall performance is typical of weak smoothness, indicating that the first-order differencing has effectively removed the trend component from the series.

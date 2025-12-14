@@ -1,0 +1,65 @@
+# Introduction
+
+## 1.1 Analyzing U.S Natural Gas Trends
+
+Natural gas is a fossil fuel composed primarily of methane (CH₄), with small amounts of ethane, propane, carbon dioxide and other gases. As a clean and efficient energy source, natural gas occupies an important place in the global energy mix and is widely used in power generation, heating, industry and transportation.
+
+Natural gas is seen as a low-carbon alternative to coal and oil because of the low greenhouse gas emissions from its combustion. Demand for natural gas will continue to grow in the near term as countries push for an energy transition to combat climate change.
+
+This analysis will reveal the time series of natural gas supply, demand and pricing, to provide insights into the global impact of natural gas, and to make forecasts for future natural gas developments.
+
+## 1.2 Big Picture
+
+This study examines the global natural gas market from multiple analytical perspectives, providing a comprehensive understanding of its historical trends, current dynamics, and future outlook. Natural gas plays a crucial role in energy security, economic growth, and climate policies, making it essential to analyze various factors that shape its trajectory. Key areas of focus include price trends and volatility, which involve understanding historical fluctuations, identifying drivers of price instability, and assessing regional pricing differences. Additionally, supply and demand correlations are explored to investigate the relationship between global production levels, consumption patterns, and international trade, assessing how imbalances impact markets. The study also analyzes the influence of major geopolitical events, such as conflicts, trade restrictions, and energy policies, on global natural gas supply and pricing. Finally, forecasting future trends through time series models and predictive analytics helps anticipate future market trends, demand growth, and potential supply chain disruptions. ![Figure 1.1: The 4 overarching perspectives of projects](picture/bigpicture.jpg)
+
+## 1.3 Literature Review
+
+1.  Biden Administration Releases LNG Export Study, Urging Caution on New Permits (Reuters, 2024) This government-backed study examines the economic and environmental implications of LNG exports from the United States. The research underscores the geopolitical significance of LNG exports in the context of global energy security, trade relations, and domestic economic policies. The study suggests that future export permits should be evaluated with caution, given the potential impact on domestic gas prices and international energy diplomacy.
+
+[Biden administration releases LNG export study, urging caution on new permits](https://www.reuters.com/business/energy/biden-administration-releases-lng-export-study-urging-caution-new-permits-2024-12-17/)
+
+2.  LNG’s Political Battle Was Over Before It Started: 8 Stocks That Benefit (Barron’s, 2024) This analysis explores the future trajectory of the U.S. natural gas market, particularly the role of LNG exports. The research discusses how recent regulatory and political decisions will shape the industry’s outlook and identifies key companies that stand to benefit from the current market landscape. The study highlights how predictive analytics and market forecasting tools are crucial in understanding long-term trends in supply, demand, and pricing.
+
+[LNG’s Political Battle Was Over Before It Started. 8 Stocks That Benefit.](https://www.barrons.com/articles/natural-gas-exxon-chevron-stocks-3c5659c2)
+
+## 1.4 Analytical Angles
+
+1.  \*\*Trend & Seasonality\*\*
+
+    \- Reveals the long-term trend and annual cycle of natural gas price fluctuations, laying the foundation for subsequent trend forecasts.
+
+2.  \*\*Driver Linkages\*\*
+
+-   Analyze the interactions between natural gas prices and oil prices, inventory levels, consumer demand, and macroeconomics (e.g., GDP, electricity prices).
+
+3.  \*\*Volatility & Risk Assessment\*\*
+
+-   Quantitatively measure the intensity of price volatility and identify price spikes and risk exposures during extreme weather or major events.
+
+4.  \*\*Forecast Application & Strategy\*\*
+
+-   Translate model forecasts into feasible procurement, reserve and risk hedging recommendations to guide short to medium term decision making.
+
+## 1.5 Guide Questions
+
+1.  What are the long-term trends in natural gas prices?
+
+2.  What are the major volatility cycles or event-driven cycles in NG=F continuous futures prices?
+
+3.  What is the linkage between oil prices and natural gas prices?
+
+4.  How does underground gas storage affect price volatility?
+
+5.  How does the structure of consumer demand (residential, industrial, power generation) play a different role in prices?
+
+6.  How do macroeconomic indicators (e.g., GDP growth) interact with natural gas prices?
+
+7.  Do electricity price fluctuations look ahead or synchronize with natural gas prices?
+
+8.  By fitting a GARCH model to WTI crude oil, can you predict the volatility of Natural gas Price?
+
+9.  What did you find when comparing the different model predictions of natural gas prices?
+
+# Reference
+
+some of code and thoughts from the text book - Gamage, P. (2026). Applied Time Series for Data Science.

@@ -1,0 +1,42 @@
+project:
+  type: website
+
+website:
+  title: "DSAN 5600 lab0"
+  navbar:
+    left:
+      - href: index.qmd
+        text: "Home"
+      - href: aboutme.qmd
+        text: "About Me"
+      - href: introduction.qmd
+        text: "Introduction"
+      - href: ds.qmd
+        text: "Data Sources"
+      - href: dv.qmd
+        text: "Data Visualization"
+      - href: eda.qmd
+        text: "Exploratory Data Analysis"
+      - href: utsm.qmd
+        text: "Univariate TS Models (ARIMA/SARIMA)"
+      - href: mtsm.qmd
+        text: "Multivariate TS Models (ARIMAX/SARIMAX/VAR)"
+      - href: ftsm.qmd
+        text: "Financial Time Series Models (ARCH/GARCH)"
+      - href: dp.qmd
+        text: "Deep Learning for TS"
+      - href: other.qmd
+        text: "Other: Interrupted TS/ARFIMA/ Spectral Analysis"
+      - href: conclusion.qmd
+        text: "Conclusion"
+format:
+  html:
+    theme: sketchy
+    toc: true
+    code-fold: true
+    echo: true
+    message: false
+    warning: false
+
+editor: visual
+

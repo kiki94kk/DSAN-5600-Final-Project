@@ -1,0 +1,1184 @@
+---
+title: "Multivariate TS Models (ARIMAX/SARIMAX/VAR)"
+format: html
+---
+
+Here is the Mutivariate TS Model Analysis
+
+### library
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(forecast)
+library(readr)
+library(vars)
+library(purrr)
+```
+
+**Clean Data**
+
+```{r}
+df_gas <- read.csv("Natural_Gas_Summary.csv", skip = 6)
+
+df_clean <- df_gas[, c("Month",
+                       "U.S..Natural.Gas.Citygate.Price....Mcf....Mcf",
+                       "U.S..Total.Natural.Gas.in.Underground.Storage..Working.Gas...MMcf..MMcf",
+                       "U.S..Natural.Gas.Total.Consumption..MMcf..MMcf",
+                       "U.S..Natural.Gas.Electric.Power.Price....Mcf....Mcf")]
+colnames(df_clean) <- c("Date", "GasPrice", "Storage", "Consumption","ElecPrice")
+write.csv(df_clean, file = "cleaned_natural_gas_data.csv", row.names = FALSE)
+```
+
+```{r}
+df_gas <- read.csv("cleaned_natural_gas_data.csv")
+colnames(df_gas)[1] <- "Month"
+
+df_gas$Month <- parse_date_time(df_gas$Month, orders = "b-y")
+df_gas$YearMonth <- format(df_gas$Month, "%Y-%m")
+
+df_oil <- read.csv("Cushing_OK_WTI_Spot_Price_FOB.csv")
+colnames(df_oil) <- c("Date", "OilPrice")
+
+df_oil$Date <- as.Date(df_oil$Date, format = "%m/%d/%Y")
+df_oil$YearMonth <- format(df_oil$Date, "%Y-%m")
+
+df_oil_monthly <- df_oil %>%
+  group_by(YearMonth) %>%
+  summarise(OilPrice = mean(OilPrice, na.rm = TRUE))
+
+
+df_gas_final <- df_gas[, c("YearMonth", "GasPrice", "Storage", "Consumption","ElecPrice")]
+
+df_oil_monthly_filtered <- df_oil_monthly %>%
+  filter(YearMonth %in% df_gas$YearMonth)
+df_gas_final$YearMonth <- as.character(df_gas_final$YearMonth)
+df_oil_monthly_filtered$YearMonth <- as.character(df_oil_monthly_filtered$YearMonth)
+
+df_merged <- merge(df_gas_final, df_oil_monthly_filtered, by = "YearMonth", all = FALSE)
+write.csv(df_merged, file = "merge_gas_oil.csv", row.names = FALSE)
+
+```
+
+# ARIMAX - OilPrice, Storage and Consumption
+
+## Model Selection and Variable Justification
+
+To analyze and forecast the U.S. natural gas price (GasPrice), we selected the ARIMAX model, which is well-suited for modeling time series data with external (exogenous) variables. ARIMAX extends the ARIMA framework by incorporating predictors that are thought to influence the response variable.
+
+Our goal is to understand and predict the natural gas price based on economic and energy market conditions. Based on domain knowledge and preliminary visualizations, we selected the following variables:
+
+-   **Response variable**: GasPrice (U.S. Natural Gas Citygate Price)
+-   **Exogenous variables**:
+    -   OilPrice (WTI Crude Oil Spot Price)
+    -   Storage (Natural Gas Working Storage)
+    -   Consumption (Total U.S. Gas Consumption)
+
+Oil prices are a major market driver of natural gas pricing due to substitution and joint production dynamics. Storage levels reflect supply availability and seasonal inventory behavior, while consumption captures demand-side pressure.
+
+Below are the time series plots of these variables over time:
+
+```{r}
+
+df_merged$YearMonth <- ym(df_merged$YearMonth)
+
+df_long <- df_merged %>%
+  pivot_longer(cols = c(GasPrice, OilPrice, Storage, Consumption),
+               names_to = "Variable", values_to = "Value")
+
+ggplot(df_long, aes(x = YearMonth, y = Value, color = Variable)) +
+  geom_line(na.rm = TRUE) +
+  facet_wrap(~Variable, scales = "free_y", ncol = 1) +
+  labs(title = "Time Series of GasPrice, OilPrice, Storage, and Consumption",
+       x = "Date", y = "Value") +
+  theme_minimal()
+```
+
+### Model fitting
+
+we first applied the `auto.arima()` function to fit an ARIMAX model with monthly gas prices as the response and **OilPrice** and **Storage** as exogenous predictors.
+
+```{r}
+
+df_model <- na.omit(df_merged)
+y <- ts(df_model$GasPrice, frequency = 12)
+
+xreg_simple <- as.matrix(df_model[, c("OilPrice", "Storage")])
+model_auto <- auto.arima(y, xreg = xreg_simple)
+summary(model_auto)
+```
+
+Based on the result, auto.arima choose model ARIMA(0,1,1)(1,0,0)\[12\], it indicates that this time series data has a seasonal structure after one differencing and is suitable for the use of seasonal AR components.
+
+Among the exogenous variables, OilPrice is identified as significant with a coefficient of 0.0230 and a p-value of less than 0.01, indicating that it has a significant positive effect on GasPrice.The coefficient of Storage is 0, indicating that it is not significant in the current model, probably due to the fact that its relationship with GasPrice is covered by seasonality or other variables.
+
+The model fits well with a training set RMSE of 0.8844 and AIC = 751.86. The residuals pass the white noise test (ACF1 = 0.042), indicating that the model captures most of the information about the structure of the series. Overall, the automated ARIMAX model is suitable for describing and forecasting the dynamics of natural gas prices
+
+```{r}
+checkresiduals(model_auto)
+```
+
+**Regression**: We first fit a linear model of gas price against OilPrice and Storage.
+
+```{r}
+model_lm <- lm(GasPrice ~ OilPrice + Storage, data = df_model)
+summary(model_lm)
+```
+
+The OilPrice coefficient is 0.02696 with a p-value \< 0.001, which is significantly positive, indicating that for every 1 unit increase in oil price, the average increase in gas price is about 0.027 units; The Storage coefficient is -5.78e-07 with a p-value of \< 0.001, which is also statistically significant, but the magnitude of its effect is very small; The R² of the regression model is 0.1632, indicating that the model can explain about 16% of the gas price fluctuations.
+
+**ARIMA on residuals**: The residuals from the regression model were modeled using ARIMA to capture remaining autocorrelations.
+
+```{r}
+resid_lm <- residuals(model_lm)
+resid_ts <- ts(resid_lm, frequency = 12)
+
+model_resid_arima <- auto.arima(resid_ts)
+summary(model_resid_arima)
+```
+
+We used an ARIMA model for the residuals of the regression model. The selected residual model is ARIMA(1,1,1)(0,0,1)\[12\].The final combined model yielded an in-sample RMSE of 0.8871, which is very close to that of the automatic ARIMAX model (0.8844). Residuals showed no significant autocorrelation (ACF1 = -0.028), confirming good model fit.
+
+**Cross Validation**
+
+```{r}
+errors <- c()
+h <- 1 
+window_size <- 60 
+
+for (i in (window_size + 1):(length(y) - h)) {
+  y_train <- y[1:i]
+  x_train <- xreg_simple[1:i, ]
+  x_test <- matrix(xreg_simple[i + 1, ], nrow = 1)
+  y_true <- y[i + 1]
+
+  fit <- tryCatch({
+    Arima(y_train, order = c(0,1,1), seasonal = list(order = c(1,0,0), period = 12), xreg = x_train)
+  }, error = function(e) return(NULL))
+  
+  if (!is.null(fit)) {
+    forecast_value <- forecast(fit, h = h, xreg = x_test)$mean
+    error <- y_true - forecast_value
+    errors <- c(errors, error)
+  }
+}
+
+
+rmse_auto_cv_manual <- sqrt(mean(errors^2, na.rm = TRUE))
+cat("Auto Rolling CV RMSE:", round(rmse_auto_cv_manual, 4), "\n")
+```
+
+**Manually Cross Validation**
+
+```{r}
+errors_manual <- c()
+h <- 1
+window_size <- 60 
+
+for (i in (window_size + 1):(length(y) - h)) {
+  df_train <- df_model[1:i, ]
+  df_test <- df_model[i + 1, ]
+
+  lm_fit <- tryCatch({
+    lm(GasPrice ~ OilPrice + Storage, data = df_train)
+  }, error = function(e) return(NULL))
+
+  if (!is.null(lm_fit)) {
+    resid_train <- residuals(lm_fit)
+    resid_ts <- ts(resid_train, frequency = 12)
+
+    resid_fit <- tryCatch({
+      auto.arima(resid_ts)
+    }, error = function(e) return(NULL))
+
+    if (!is.null(resid_fit)) {
+      yhat_lm <- predict(lm_fit, newdata = df_test)
+      yhat_resid <- forecast(resid_fit, h = h)$mean
+      yhat_combined <- yhat_lm + yhat_resid
+
+      y_true <- df_test$GasPrice
+
+      error <- y_true - yhat_combined
+      errors_manual <- c(errors_manual, error)
+    }
+  }
+}
+
+rmse_manual_cv <- sqrt(mean(errors_manual^2, na.rm = TRUE))
+cat("Manual Model Rolling CV RMSE:", round(rmse_manual_cv, 4), "\n")
+```
+
+**Cross Validation Compare Plot**
+
+```{r}
+rmse_values <- c(0.8843, 0.8871, 1.0394, 1.0265)
+names_rmse <- c("Auto Fit", "Manual Fit", "Auto CV", "Manual CV")
+
+barplot(rmse_values,
+        names.arg = names_rmse,
+        col = c("skyblue", "lightgreen", "orange", "lightpink"),
+        main = "Model RMSE Comparison (Fit vs CV)",
+        ylab = "RMSE",
+        ylim = c(0, max(rmse_values) + 0.1))
+```
+
+From the rolling cross-validation results, the RMSE of the automatic ARIMAX model is 1.0394, and that of the manual model (linear regression + ARIMA residual modeling) is 1.0265. Although the difference is not significant, the manual model is slightly better, so we choose the manual model as the final prediction model. So the best model is ARIMA(1,1,1)(0,0,1)\[12\]
+
+**Forecasting**
+
+```{r}
+resid_lm <- residuals(model_lm)
+resid_ts <- ts(resid_lm, frequency = 12)
+
+model_resid_final <- Arima(resid_ts,
+                           order = c(1, 1, 1),
+                           seasonal = list(order = c(0, 0, 1), period = 12))
+summary(model_resid_final)
+```
+
+```{r}
+future_xreg <- tail(df_model[, c("OilPrice", "Storage")], 6)
+
+yhat_lm_future <- predict(model_lm, newdata = future_xreg)
+
+yhat_resid_future <- forecast(model_resid_final, h = 6)$mean
+
+yhat_manual_forecast <- yhat_lm_future + yhat_resid_future
+
+last_date <- as.Date(paste0(tail(df_model$YearMonth, 1), "-01"))
+future_dates <- seq(last_date %m+% months(1), by = "month", length.out = 6)
+
+df_forecast <- data.frame(
+  Date = future_dates,
+  Predicted_GasPrice = as.numeric(yhat_manual_forecast)
+)
+
+ggplot(df_forecast, aes(x = Date, y = Predicted_GasPrice)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "Forecast of Gas Price (Manual ARIMAX Model)",
+       x = "Date", y = "Predicted Gas Price") +
+  theme_minimal()
+```
+
+In order to generate realistic forecasts of natural gas prices, we use auto.arima() to build time series models for the exogenous variables OilPrice and Storage, respectively, and make 6-period forecasts for each. The forecasts are entered into the regression model as exogenous variables and combined with the residual ARIMA model to produce the final forecasts.
+
+The Model Equation is: $$
+(1 - 0.6000 B)(1 - B)y_t = (1 - 0.8807 B)(1 + 0.0725 B^{12})\varepsilon_t
+$$ The forecast shows an overall downward trend in natural gas prices over the next six months. Combining our modeling findings for OilPrice and Storage: -Crude oil prices have a significant positive impact on natural gas prices; -Increases in storage could slightly dampen gas price increases; -The recent decline in oil price volatility may be a significant driver of downward gas prices; Therefore, in the current market environment, if oil prices continue to be low, gas prices may decline further. However, a short-term rebound cannot be ruled out due to seasonality and lag structure.
+
+# A VAR Model of Gas Price, Oil Price, and Economic Activity (GDP)
+
+```{r}
+
+df_energy <- read.csv("merge_gas_oil.csv")
+df_gdp <- read.csv("GDP.csv")
+
+
+df_energy <- df_energy %>%
+  mutate(YearMonth = ym(YearMonth))
+
+df_gdp <- df_gdp %>%
+  mutate(YearMonth = ymd(observation_date)) %>%
+  mutate(YearMonth = floor_date(YearMonth, unit = "month"))
+
+
+df_var <- inner_join(df_energy, df_gdp, by = "YearMonth")
+
+head(df_var)
+```
+
+**Time Series Plot**
+
+```{r}
+df_var_model1 <- df_var %>%
+  dplyr::select(YearMonth, GasPrice, OilPrice, GDP) %>%
+  na.omit() %>%
+  mutate(Date = YearMonth)
+
+df_long <- df_var_model1 %>%
+  pivot_longer(cols = c("GasPrice", "OilPrice", "GDP"),
+               names_to = "Variable",
+               values_to = "Value")
+
+ggplot(df_long, aes(x = Date, y = Value)) +
+  geom_line(color = "steelblue") +
+  facet_wrap(~Variable, scales = "free_y", ncol = 1) +
+  xlab("Year") + ylab("") +
+  ggtitle("Monthly Time Series: Gas Price, Oil Price, and GDP")
+```
+
+**VARselection**
+
+```{r}
+start_year <- year(min(df_var_model1$Date))
+start_month <- month(min(df_var_model1$Date))
+
+ts_var_model1 <- ts(df_var_model1[, c("GasPrice", "OilPrice", "GDP")],
+                    start = c(start_year, start_month),
+                    frequency = 12)
+VARselect(ts_var_model1, lag.max = 12, type = "both")
+```
+
+When using the VARselect() function for lag order selection, the information criteria AIC, HQ and SC consistently recommend the use of VAR(9), while the FPE criterion recommends VAR(10). Therefore, we try to include VAR(10) in the model comparison and perform Rolling Cross-Validation with VAR(8) and VAR(9). However, in actual runs we found that the VAR(10) model could not be successfully fitted in multiple training windows. This may be due to the mismatch between insufficient sample size and model complexity
+
+**Cross Validation**
+
+```{r}
+
+rolling_cv_var <- function(ts_data, p, forecast_horizon = 1, rolling_window = 30) {
+  ts_data_mat <- as.matrix(ts_data)
+  n <- nrow(ts_data_mat)
+  
+  if(n < rolling_window + forecast_horizon) {
+    stop("Not enough data for rolling window CV. Please reduce rolling_window or forecast_horizon.")
+  }
+  
+  errors <- c()
+  ts_start <- start(ts_data)
+  ts_freq  <- frequency(ts_data)
+  
+  for(i in seq(rolling_window, n - forecast_horizon)) {
+    train_data <- ts_data_mat[1:i, ]
+    
+    train_ts <- ts(train_data, start = ts_start, frequency = ts_freq)
+    
+    var_fit <- tryCatch(
+      {
+        VAR(train_ts, p = p, type = "both")
+      },
+      error = function(e) {
+        message(sprintf("Error fitting VAR(p=%d) at i=%d: %s", p, i, e$message))
+        return(NULL)
+      },
+      warning = function(w) {
+        message(sprintf("Warning fitting VAR(p=%d) at i=%d: %s", p, i, w$message))
+        return(NULL)
+      }
+    )
+    
+    if(is.null(var_fit)) {
+      errors <- c(errors, NA)
+      next
+    }
+    
+    pred <- tryCatch(
+      {
+        predict(var_fit, n.ahead = forecast_horizon)
+      },
+      error = function(e) {
+        message(sprintf("Error forecasting at i=%d: %s", i, e$message))
+        return(NULL)
+      }
+    )
+    
+    if(is.null(pred)) {
+      errors <- c(errors, NA)
+      next
+    }
+    
+    pred_values <- pred$fcst[[1]][, "fcst"]
+    
+    if(any(is.na(pred_values)) || any(is.infinite(pred_values))) {
+      message(sprintf("Forecast values contain NA or Inf at i=%d", i))
+      errors <- c(errors, NA)
+      next
+    }
+    
+    true_values <- ts_data_mat[(i + 1):(i + forecast_horizon), 1]
+    
+    errors <- c(errors, true_values - pred_values)
+  }
+  
+  rmse <- sqrt(mean(errors^2, na.rm = TRUE))
+  return(rmse)
+}
+
+rmse_p8 <- rolling_cv_var(ts_var_model1, p = 8, forecast_horizon = 1, rolling_window = 30)
+rmse_p9 <- rolling_cv_var(ts_var_model1, p = 9, forecast_horizon = 1, rolling_window = 30)
+
+rmse_results <- data.frame(
+  Model = c("VAR(8)", "VAR(9)"),
+  RMSE  = c(rmse_p8, rmse_p9)
+)
+
+print(rmse_results)
+
+```
+
+**RMSE Comparison Plot**
+
+```{r}
+# Visualize the comparison
+ggplot(rmse_results, aes(x = Model, y = RMSE, fill = Model)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Rolling Window CV: RMSE Comparison for VAR(8) vs VAR(9)") +
+  theme_minimal()
+```
+
+Although the lag order recommended by the information criterion (AIC, HQ, SC) is p = 9 when using the VARselect() function, VAR(8) significantly outperforms VAR(9) in the actual rolling window cross-validation.In addition, VAR(10), although it performs the best under the FPE criterion, has been ruled out in cross-validation due to the singularity of covariance matrices (singular) could not function properly and has been excluded. Therefore, combining the model stability and forecasting performance, we finally chose VAR(8) as the multivariate time series forecasting model in this study.
+
+**VAR(8) Forecasting: Gas Price Based on Oil Price and GDP**
+
+```{r}
+final_var_model <- VAR(ts_var_model1, p = 8, type = "both")
+summary(final_var_model)
+```
+
+**Equation** $$\begin{aligned}
+\text{GasPrice}t &=\,-0.07885\,\text{GasPrice}{t-1}
++0.03006\,\text{OilPrice}{t-1}
+-0.0005629\,\text{GDP}{t-1}\\
+&\quad +0.4278\,\text{GasPrice}{t-2}
++0.03606\,\text{OilPrice}{t-2}
+-0.0001150\,\text{GDP}{t-2}\\
+&\quad +0.01054\,\text{GasPrice}{t-3}
+-0.01026\,\text{OilPrice}{t-3}
++0.0004386\,\text{GDP}{t-3}\\
+&\quad +0.07021\,\text{GasPrice}{t-4}
+-0.01841\,\text{OilPrice}{t-4}
++0.0001483\,\text{GDP}{t-4}\\
+&\quad +0.006330\,\text{GasPrice}{t-5}
+-0.04066\,\text{OilPrice}{t-5}
++0.0008245\,\text{GDP}{t-5}\\
+&\quad -0.1617\,\text{GasPrice}{t-6}
++0.01760\,\text{OilPrice}{t-6}
+-0.0008281\,\text{GDP}{t-6}\\
+&\quad -0.8232\,\text{GasPrice}{t-7}
+-0.04932\,\text{OilPrice}{t-7}
++0.001716\,\text{GDP}{t-7}\\
+&\quad -0.1338\,\text{GasPrice}{t-8}
++0.02611\,\text{OilPrice}{t-8}
+-0.0004925\,\text{GDP}{t-8}\\
+&\quad -11.83\ \;+\;-0.1674\;\times t\;+\;u{1,t}
+\end{aligned}$$
+
+$$\begin{aligned}
+\text{OilPrice}t &=\;3.8046\,\text{GasPrice}{t-1}
++0.2869\,\text{OilPrice}{t-1}
+-0.001759\,\text{GDP}{t-1}\\
+&\quad -0.8679\,\text{GasPrice}{t-2}
+-0.04260\,\text{OilPrice}{t-2}
++0.007212\,\text{GDP}{t-2}\\
+&\quad +1.7525\,\text{GasPrice}{t-3}
+-0.006096\,\text{OilPrice}{t-3}
+-0.010434\,\text{GDP}{t-3}\\
+&\quad +0.9211\,\text{GasPrice}{t-4}
+-0.9288\,\text{OilPrice}{t-4}
++0.014433\,\text{GDP}{t-4}\\
+&\quad +4.0461\,\text{GasPrice}{t-5}
++0.8892\,\text{OilPrice}{t-5}
+-0.021175\,\text{GDP}{t-5}\\
+&\quad +4.7601\,\text{GasPrice}{t-6}
+-0.3141\,\text{OilPrice}{t-6}
+-0.001824\,\text{GDP}{t-6}\\
+&\quad +10.0292\,\text{GasPrice}{t-7}
+-0.7116\,\text{OilPrice}{t-7}
++0.003900\,\text{GDP}{t-7}\\
+&\quad +5.3656\,\text{GasPrice}{t-8}
+-0.2998\,\text{OilPrice}{t-8}
+-0.005871\,\text{GDP}{t-8}\\
+&\quad +218.41\ \;+\;4.5328\;\times t\;+\;u{2,t}
+\end{aligned}$$
+
+$$\begin{aligned}
+\text{GDP}t &=\;267.08\,\text{GasPrice}{t-1}
+-12.8995\,\text{OilPrice}{t-1}
++0.4143\,\text{GDP}{t-1}\\
+&\quad +81.215\,\text{GasPrice}{t-2}
++13.885\,\text{OilPrice}{t-2}
+-0.1077\,\text{GDP}{t-2}\\
+&\quad -42.993\,\text{GasPrice}{t-3}
+-13.842\,\text{OilPrice}{t-3}
++0.02392\,\text{GDP}{t-3}\\
+&\quad +182.19\,\text{GasPrice}{t-4}
+-25.020\,\text{OilPrice}{t-4}
++0.1625\,\text{GDP}{t-4}\\
+&\quad +109.10\,\text{GasPrice}{t-5}
++23.875\,\text{OilPrice}{t-5}
+-0.3899\,\text{GDP}{t-5}\\
+&\quad +222.58\,\text{GasPrice}{t-6}
+-9.7436\,\text{OilPrice}{t-6}
+-0.20496\,\text{GDP}{t-6}\\
+&\quad +350.59\,\text{GasPrice}{t-7}
+-38.347\,\text{OilPrice}{t-7}
++0.4638\,\text{GDP}{t-7}\\
+&\quad +314.62\,\text{GasPrice}{t-8}
+-15.678\,\text{OilPrice}{t-8}
++0.02396\,\text{GDP}{t-8}\\
+&\quad +7348.91\ \;-\;9.154\;\times t\;+\;u{3,t}
+\end{aligned}$$
+
+```{r}
+forecast_var8 <- predict(final_var_model, n.ahead = 6)
+forecast_var8$fcst$GasPrice
+forecast_var8$fcst$OilPrice
+forecast_var8$fcst$GDP
+```
+
+```{r}
+ts_start    <- start(ts_var_model1)   
+start_year  <- ts_start[1]
+start_month <- ts_start[2]
+
+
+n_hist     <- nrow(ts_var_model1)   
+n_fcst     <- nrow(forecast_var8$fcst$GasPrice) 
+all_dates  <- seq(
+  from     = as.Date(paste0(start_year, "-", sprintf("%02d", start_month), "-01")),
+  by       = "month",
+  length.out = n_hist + n_fcst
+)
+
+
+gas_fcst <- forecast_var8$fcst$GasPrice[ , "fcst"]
+oil_fcst <- forecast_var8$fcst$OilPrice[ , "fcst"]
+gdp_fcst <- forecast_var8$fcst$GDP[      , "fcst"]
+
+
+fcst_dates <- tail(all_dates, n_fcst)
+
+
+df_three_fc <- data.frame(
+  Date     = fcst_dates,
+  GasPrice = gas_fcst,
+  OilPrice = oil_fcst,
+  GDP      = gdp_fcst
+)
+
+
+df_long <- pivot_longer(
+  df_three_fc,
+  cols       = -Date,
+  names_to   = "Variable",
+  values_to  = "Forecast"
+)
+
+ggplot(df_long, aes(x = Date, y = Forecast, color = Variable)) +
+  geom_line(size = 1) +
+  labs(
+    title = "6-Month Forecast from VAR(8)",
+    x     = "Date",
+    y     = "Forecast Value"
+  ) +
+  theme_minimal()
+```
+
+We used a VAR(8) model to forecast gas prices using oil price and GDP as explanatory variables. Although VAR(9) was suggested by information criteria (AIC, SC, etc.), cross-validation results indicated that VAR(8) yielded a significantly lower RMSE (9.08 vs 24.25), and was thus selected as the final model.
+
+Based on the VAR(8) model, we forecasted gas prices for the next 6 months using oil prices and GDP as predictors. The forecast results show an upward trend in gas prices, as indicated by the red line in the graph.
+
+Several key insights emerge: • Short-term increase: The gas price is projected to increase steadily over the forecast horizon. This may reflect anticipated changes in oil price or macroeconomic growth captured by GDP. • Model responsiveness: The VAR(8) model reacts to recent volatility in gas prices and oil prices, suggesting it is sensitive to dynamic changes across variables.
+
+# A VAR model of Gas Price, Oil Price and Gas Consumption
+
+```{r}
+df <- read.csv("merge_gas_oil.csv")
+
+head(df$YearMonth)
+df_var2 <- df %>%
+  mutate(Date = ym(YearMonth)) %>% 
+  dplyr::select(Date, GasPrice, OilPrice, Consumption) %>% 
+  na.omit()
+
+df_long <- df_var2 %>%
+  pivot_longer(cols = c("GasPrice", "OilPrice", "Consumption"),
+               names_to = "Variable", values_to = "Value")
+
+ggplot(df_long, aes(x = Date, y = Value)) +
+  geom_line(color = "steelblue") +
+  facet_wrap(~Variable, scales = "free_y", ncol = 1) +
+  labs(title = "Time Series: Gas Price, Oil Price, Consumption",
+       x = "Year", y = "")
+
+```
+
+```{r}
+library(vars)
+ts_var2 <- ts(df_var2[, c("GasPrice", "OilPrice", "Consumption")],
+                start = c(year(min(df_var2$Date)), month(min(df_var2$Date))),
+                frequency = 12)
+
+VARselect(ts_var2, lag.max = 10, type = "both")
+```
+
+Based on the result, AIC(n) and FPE(n) are both optimal at p=10, SC(n) is optimal at p=1, HQ(n) is optimal at p=2
+
+so we will be fit them using VAR()
+
+```{r}
+var_fit_p1 <- VAR(ts_var2, p = 1, type = "both")
+summary(var_fit_p1)
+
+var_fit_p2 <- VAR(ts_var2, p = 2, type = "both")
+summary(var_fit_p2)
+
+var_fit_p10 <- VAR(ts_var2, p = 10, type = "both")
+summary(var_fit_p10)
+```
+
+Overall, by comparing the p=1, p=2 and p=10 models, we find that:
+
+The p=1 model is simpler but may leave out some important dynamic information;
+
+The p=10 model, while performing better in terms of statistical fit, is complex and prone to overfitting due to the large number of insignificant higher order lag terms;
+
+The p=2 model captures the necessary dynamic information while maintaining good parameter significance and interpretability, which balances the fitting effect with the robustness of prediction.
+
+Therefore, based on the above analysis and indicators, the p=2 model is a more ideal choice.
+
+## Cross Validation
+
+```{r}
+n_total <- nrow(ts_var2)  
+h <- 12                   
+train_end <- n_total - h   
+
+errors_p1 <- c()
+errors_p2 <- c()
+errors_p10 <- c()
+
+for(i in train_end:(n_total - 1)){
+  train_data <- window(ts_var2, end = time(ts_var2)[i])
+  
+  var_fit_p1 <- VAR(train_data, p = 1, type = "both")
+  var_fit_p2 <- VAR(train_data, p = 2, type = "both")
+  var_fit_p10 <- VAR(train_data, p = 10, type = "both")
+  
+  f_p1 <- predict(var_fit_p1, n.ahead = 1)$fcst$GasPrice[1, "fcst"]
+  f_p2 <- predict(var_fit_p2, n.ahead = 1)$fcst$GasPrice[1, "fcst"]
+  f_p10 <- predict(var_fit_p10, n.ahead = 1)$fcst$GasPrice[1, "fcst"]
+  
+  actual <- ts_var2[i + 1, "GasPrice"]
+  
+  errors_p1 <- c(errors_p1, actual - f_p1)
+  errors_p2 <- c(errors_p2, actual - f_p2)
+  errors_p10 <- c(errors_p10, actual - f_p10)
+}
+
+rmse_p1 <- sqrt(mean(errors_p1^2, na.rm = TRUE))
+rmse_p2 <- sqrt(mean(errors_p2^2, na.rm = TRUE))
+rmse_p10 <- sqrt(mean(errors_p10^2, na.rm = TRUE))
+
+rmse_df <- data.frame(
+  Model = c("p=1", "p=2", "p=10"),
+  RMSE = c(rmse_p1, rmse_p2, rmse_p10)
+)
+
+print(rmse_df)
+
+ggplot(rmse_df, aes(x = Model, y = RMSE, fill = Model)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Cross Validation RMSE for VAR Models (GasPrice)",
+       y = "RMSE", x = "Model")
+```
+
+We can see from the plot, when p = 1, the RMSE is lowest, so we will say Var(1) is the best model
+
+## **Forecasting**
+
+```{r}
+var_model_p1 <- VAR(ts_var2, p = 1, type = "both")
+summary(var_model_p1)
+
+h <- 12
+forecast_p1 <- predict(var_model_p1, n.ahead = h)
+
+forecast_p1$fcst$GasPrice
+
+forecast_p1$fcst$OilPrice
+
+forecast_p1$fcst$Consumption
+```
+
+$$
+\begin{aligned}
+\text{GasPrice}t
+&= \;0.8084\,\text{GasPrice}{t-1}
+\;+\;0.007733\,\text{OilPrice}{t-1}
+\;+\;2.041\times10^{-8}\,\text{Consumption}{t-1}\\
+&\quad+\;0.8666
+\;-\;0.002340\,t
+\;+\;\varepsilon_{1,t}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\text{OilPrice}t
+&= \;-0.02592\,\text{GasPrice}{t-1}
+\;+\;0.9735\,\text{OilPrice}{t-1}
+\;+\;1.555\times10^{-6}\,\text{Consumption}{t-1}\\
+&\quad-\;0.6430
+\;-\;0.005127\,t
+\;+\;\varepsilon_{2,t}
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\text{Consumption}t
+&= \;-4060\,\text{GasPrice}{t-1}
+\;-\;622.7\,\text{OilPrice}{t-1}
+\;+\;0.7090\,\text{Consumption}{t-1}\\
+&\quad+\;5.401\times10^{5}
+\;+\;1107\,t
+\;+\;\varepsilon_{3,t}
+\end{aligned}
+$$
+
+```{r}
+h             <- nrow(forecast_p1$fcst$GasPrice)
+last_date     <- max(df_var2$Date)
+forecast_dates<- seq(last_date %m+% months(1),
+                      by         = "month",
+                      length.out = h)
+
+
+vars <- c("GasPrice", "OilPrice", "Consumption")
+forecast_df <- map_dfr(vars, function(v) {
+  fc <- forecast_p1$fcst[[v]]
+  tibble(
+    Date     = forecast_dates,
+    Variable = v,
+    Forecast = fc[ , "fcst"],
+    Lower    = fc[ , "lower"],
+    Upper    = fc[ , "upper"]
+  )
+})
+
+
+ggplot(forecast_df, aes(x = Date, y = Forecast)) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper),
+              fill  = "pink",
+              alpha = 0.3) +
+  geom_line(color = "darkred", size = 1) +
+  facet_wrap(~ Variable, scales = "free_y", ncol = 1) +
+  labs(
+    title = "VAR(1) 12-Month Forecasts for GasPrice, OilPrice & Consumption",
+    x     = "Date",
+    y     = "Forecast"
+  ) +
+  theme_minimal()
+```
+
+The 12-period forecast based on the VAR(1) model shows that GasPrice is expected to remain relatively stable in the coming year, with limited volatility, suggesting that the market as a whole is stabilizing, while OilPrice, although not changing much, has a significantly wider confidence interval, reflecting a high degree of uncertainty as it is more subject to external disturbances. In contrast, Consumption shows a slow upward trend, possibly reflecting the gradual increase in natural gas consumption as economic activity recovers.
+
+# VAR - Electricity Gas Price Forecasting Model
+
+To explore the dynamic relationship between U.S. natural gas electricity prices, natural gas consumption in the power sector, and natural gas exports, we selected the following three variables to construct a VAR model:
+
+\- ElecPrice: the price of natural gas delivered to the power sector in the United States;
+
+-   ElecConsumption: natural gas consumption in the power sector; - Export: U.S. natural gas exports.
+
+```{r}
+df_elec <- read.csv("Natural_Gas_Summary.csv", skip = 6)
+df_clean_elec <- df_elec[, c("Month",
+                       "U.S..Natural.Gas.Electric.Power.Price....Mcf....Mcf",
+                       "U.S..Natural.Gas.Deliveries.to.Electric.Power.Consumers..MMcf..MMcf",
+                       "U.S..Natural.Gas.Exports..MMcf..MMcf")]
+colnames(df_clean_elec) <- c("Date", "ElecPrice", "ElecConsumption", "Export")
+
+df_clean_elec$Date <- parse_date_time(df_clean_elec$Date, orders = "b Y")
+
+
+df_plot <- df_clean_elec %>%
+  pivot_longer(cols = c(ElecPrice, ElecConsumption, Export),
+               names_to = "Variable", values_to = "Value")
+df_plot <- df_plot %>% filter(!is.na(Value))
+
+ggplot(df_plot, aes(x = Date, y = Value, color = Variable)) +
+  geom_line() +
+  facet_wrap(~Variable, scales = "free_y") +
+  labs(title = "Electricity Sector: Gas Price, Consumption, and Exports")
+```
+
+We can see from the plot - Natural gas exports have been rising since 2010 and are highly correlated with the timing of electricity price fluctuations; - Gas consumption in the power sector, while generally on an upward trend, has been subdued during periods of high electricity prices.
+
+This provides intuitive support for the use of vector autoregressive (VAR) modeling to study the intrinsic dynamics among the three.
+
+## Fit Var Model
+
+```{r}
+df_elec_var <- df_clean_elec[, c("ElecPrice", "ElecConsumption", "Export")]
+df_elec_var <- na.omit(df_elec_var)
+start_year <- year(df_clean_elec$Date[1])
+start_month <- month(df_clean_elec$Date[1])
+df_elec_ts <- ts(df_elec_var, start = c(start_year, start_month), frequency = 12)
+```
+
+### Find p
+
+```{r}
+VARselect(df_elec_ts, lag.max = 10, type = "both")
+```
+
+According to the results the best AIC, HQ, and FPE are all at p=10 and the best SC is at p=2 We decided that we will perform the proposed merger comparison for VAR (2), VAR (5) and VAR (10)
+
+```{r}
+fit_var2 <- VAR(df_elec_ts, p = 2, type = "both")
+summary(fit_var2)
+fit_var5 <- VAR(df_elec_ts, p = 5, type = "both")
+summary(fit_var5)
+fit_var10 <- VAR(df_elec_ts, p = 10, type = "both")
+summary(fit_var10)
+```
+
+We fit three models, VAR(2), VAR(5) and VAR(10), respectively, where VAR(2) is more concise in terms of model structure, VAR(5) possesses strong explanatory power in multiple equations, and VAR(10) achieves lower values on some information criteria, but also suffers from higher complexity and low significance of coefficients.
+
+## CV
+
+```{r}
+cv_rmse_var_monthly <- function(ts_data, p, h = 3, initial = 180) {
+  n <- nrow(ts_data)
+  actuals <- c()
+  preds <- c()
+  
+  for (i in seq(initial, n - h)) {
+    train_data <- ts_data[1:i, ]
+    test_data <- ts_data[(i + 1):(i + h), "ElecPrice"]
+    
+    fit <- VAR(train_data, p = p, type = "const")
+    fcast <- predict(fit, n.ahead = h)
+    
+    pred <- fcast$fcst$ElecPrice[1:h, "fcst"]
+    
+    actuals <- c(actuals, test_data)
+    preds <- c(preds, pred)
+  }
+  
+  rmse <- sqrt(mean((actuals - preds)^2, na.rm = TRUE))
+  return(rmse)
+}
+```
+
+```{r}
+rmse_var2  <- cv_rmse_var_monthly(df_elec_ts, p = 2, h = 3, initial = 180)
+rmse_var5  <- cv_rmse_var_monthly(df_elec_ts, p = 5, h = 3, initial = 180)
+rmse_var10 <- cv_rmse_var_monthly(df_elec_ts, p = 10, h = 3, initial = 180)
+
+cat("RMSE for VAR(2): ", round(rmse_var2, 4), "\n")
+cat("RMSE for VAR(5): ", round(rmse_var5, 4), "\n")
+cat("RMSE for VAR(10):", round(rmse_var10, 4), "\n")
+```
+
+```{r}
+df_rmse <- data.frame(
+  Model = c("VAR(2)", "VAR(5)", "VAR(10)"),
+  RMSE = c(rmse_var2, rmse_var5, rmse_var10)
+)
+
+ggplot(df_rmse, aes(x = Model, y = RMSE, fill = Model)) +
+  geom_col(width = 0.6) +
+  labs(title = "RMSE Comparison of VAR Models (3-Month Forecast)",
+       y = "RMSE (ElecPrice)",
+       x = "VAR Model (p)")
+```
+
+According to the results of RMSE comparison shows that VAR (5) is the best model, so we choose VAR (5) as the final model, and we will use VAR (5) for prediction below
+
+## Forecast
+
+```{r}
+fit_var_best <- VAR(df_elec_ts, p = 5, type = "const")
+summary(fit_var_best)
+```
+
+**Equation**
+
+$$
+\begin{aligned}
+\mathrm{ElecPrice}t
+&=\,0.6149\,\mathrm{ElecPrice}{t-1}
+\;-\;2.063\times10^{-6}\,\mathrm{ElecConsumption}{t-1}
+\;+\;1.176\times10^{-5}\,\mathrm{Export}{t-1}\\
+&\quad+\;0.01339\,\mathrm{ElecPrice}{t-2}
+\;+\;3.392\times10^{-6}\,\mathrm{ElecConsumption}{t-2}
+\;-\;1.254\times10^{-5}\,\mathrm{Export}{t-2}\\
+&\quad+\;0.1703\,\mathrm{ElecPrice}{t-3}
+\;-\;4.448\times10^{-6}\,\mathrm{ElecConsumption}{t-3}
+\;+\;2.725\times10^{-6}\,\mathrm{Export}{t-3}\\
+&\quad-\;0.05071\,\mathrm{ElecPrice}{t-4}
+\;+\;2.064\times10^{-6}\,\mathrm{ElecConsumption}{t-4}
+\;-\;8.380\times10^{-6}\,\mathrm{Export}{t-4}\\
+&\quad+\;0.1060\,\mathrm{ElecPrice}{t-5}
+\;+\;3.866\times10^{-7}\,\mathrm{ElecConsumption}{t-5}
+\;+\;6.728\times10^{-6}\,\mathrm{Export}{t-5}\\
+&\quad+\;1.161\;+\;\varepsilon_{1,t}\,.
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\mathrm{ElecConsumption}t
+&=\,-1.355\times10^{4}\,\mathrm{ElecPrice}{t-1}
+\;+\;1.128\,\mathrm{ElecConsumption}{t-1}
+\;-\;1.417\,\mathrm{Export}{t-1}\\
+&\quad+\;2236\,\mathrm{ElecPrice}{t-2}
+\;-\;0.4698\,\mathrm{ElecConsumption}{t-2}
+\;+\;0.6548\,\mathrm{Export}{t-2}\\
+&\quad-\;7869\,\mathrm{ElecPrice}{t-3}
+\;-\;0.1152\,\mathrm{ElecConsumption}{t-3}
+\;+\;0.1797\,\mathrm{Export}{t-3}\\
+&\quad+\;20150\,\mathrm{ElecPrice}{t-4}
+\;+\;0.08516\,\mathrm{ElecConsumption}{t-4}
+\;+\;0.7965\,\mathrm{Export}{t-4}\\
+&\quad-\;6472\,\mathrm{ElecPrice}{t-5}
+\;+\;0.03428\,\mathrm{ElecConsumption}{t-5}
+\;+\;0.06364\,\mathrm{Export}{t-5}\\
+&\quad+\;1.995\times10^{5}\;+\;\varepsilon_{2,t}\,.
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\mathrm{Export}t
+&=\;3001\,\mathrm{ElecPrice}{t-1}
+\;+\;0.0006944\,\mathrm{ElecConsumption}{t-1}
+\;+\;0.5538\,\mathrm{Export}{t-1}\\
+&\quad+\;1855\,\mathrm{ElecPrice}{t-2}
+\;+\;0.009501\,\mathrm{ElecConsumption}{t-2}
+\;+\;0.4055\,\mathrm{Export}{t-2}\\
+&\quad-\;1655\,\mathrm{ElecPrice}{t-3}
+\;+\;0.01160\,\mathrm{ElecConsumption}{t-3}
+\;-\;0.09331\,\mathrm{Export}{t-3}\\
+&\quad+\;86.22\,\mathrm{ElecPrice}{t-4}
+\;-\;0.005401\,\mathrm{ElecConsumption}{t-4}
+\;-\;0.02256\,\mathrm{Export}{t-4}\\
+&\quad-\;695.3\,\mathrm{ElecPrice}{t-5}
+\;+\;0.04157\,\mathrm{ElecConsumption}{t-5}
+\;+\;0.09611\,\mathrm{Export}{t-5}\\
+&\quad-\;44440\;+\;\varepsilon_{3,t}\,.
+\end{aligned}
+$$
+
+```{r}
+
+fcast <- predict(fit_var_best, n.ahead = 12)
+
+fcast_elec <- fcast$fcst$ElecPrice
+
+fcast_mean <- fcast_elec[, "fcst"]
+
+start_forecast <- time(df_elec_ts)[length(df_elec_ts[,1])] + 1/12 
+fcast_ts <- ts(fcast_mean, start = start_forecast, frequency = 12)
+
+
+elec_hist <- df_elec_ts[, "ElecPrice"]
+
+elec_combined <- ts(
+  c(elec_hist, fcast_ts),
+  start = start(elec_hist),
+  frequency = 12
+)
+
+autoplot(elec_combined, series = "ElecPrice") +
+  autolayer(fcast_ts, series = "Forecast", color = "blue") +
+  labs(
+    title = "Forecast of ElecPrice using Selected VAR(5) Model",
+    x = "Time",
+    y = "Electricity Gas Price ($/Mcf)"
+  ) +
+  theme_minimal()
+```
+
+Forecasts indicate that after the current price decline to a low level, a slow recovery is likely to occur over the next 12 months, with prices expected to rise gently from around \$3.5/Mcf to around \$5/Mcf. In practice, this trend may reflect the rebound in electricity demand against the backdrop of the gradual recovery of the U.S. domestic economy, as well as the price support brought about by the continued growth in export demand.
+
+In addition, as the clean energy transition progresses, the role of natural gas as a transitional energy source in the power system remains important. This means that even if the overall energy structure in the transition to renewable energy, natural gas prices will still be subject to short-term policy regulation, price fluctuations in the international market, as well as seasonal demand changes in the combined impact.
+
+# VAR - Gas Price, Oil Price, ElecPrice
+
+```         
+- GasPrice and ElecPrice: The power industry uses a large amount of natural gas to generate electricity, and the price of gas used for power and the overall natural gas price show a high degree of synchronization in terms of price movements, especially during the price peaks around 2021 when there is a clear resonance. This suggests that price changes in the natural gas market can directly impact the power industry's purchasing costs.
+- GasPrice vs. OilPrice: As an alternative energy source, natural gas and crude oil prices have a degree of linkage over the long term, especially when there are simultaneous changes in supply and demand in the energy market, such as during the 2008 financial crisis and the early stages of the 2020 epidemic. The two are characterized by time-lagged or synchronized fluctuations in trends.
+- ElecPrice and OilPrice: Although the link is not as strong as the previous two, changes in oil prices may also affect electricity prices through cost transmission or market expectations under energy inflationary pressures or supply chain shocks.
+```
+
+```{r}
+df_goe <- read.csv("merge_gas_oil.csv")
+df_goe <- df_goe[, c("YearMonth", "GasPrice", "OilPrice", "ElecPrice")]
+df_goe <- na.omit(df_goe)
+df_goe <- df_goe %>%
+  mutate(YearMonth = as.yearmon(YearMonth, format = "%Y-%m")) %>%
+  filter(!is.na(GasPrice) & !is.na(OilPrice) & !is.na(ElecPrice))
+
+df_long <- df_goe %>%
+  pivot_longer(cols = c(GasPrice, OilPrice, ElecPrice),
+               names_to = "Variable", values_to = "Value")
+
+ggplot(df_long, aes(x = YearMonth, y = Value, color = Variable)) +
+  geom_line(size = 1) +
+  facet_wrap(~ Variable, scales = "free_y", ncol = 1) +
+  labs(title = "Monthly Time Series of GasPrice, OilPrice, and ElecPrice",
+       x = "Date", y = "Price (USD/Mcf or USD/Barrel)") +
+  theme_minimal()
+
+```
+
+The visualization in the figure above further supports the existence of these relationships. The common volatility of the three time series over multiple time periods, such as the peaks and troughs around 2008, 2014, 2020, and 2022, suggests that there may be Granger causality or cointegration between them, making them suitable for linkage modeling and forecasting using the VAR model.
+
+## Var Select
+
+```{r}
+df_goe_clean <- na.omit(df_goe)
+start_year <- year(min(df_goe_clean$YearMonth))
+start_month <- month(min(df_goe_clean$YearMonth))
+ts_goe <- ts(df_goe_clean[, -1], start = c(start_year, start_month), frequency = 12)
+VARselect(ts_goe, lag.max = 10, type = "both")
+```
+
+We used the VARselect() function and set the maximum lag order to 10. The results show that different criteria recommend different optimal lag orders. AIC and FPE: recommended lag order is 10; The results show that different criteria recommend different optimal lag orders, AIC and FPE: the recommended lag order is 10; HQ and SC: the recommended lag order is 2. In order to evaluate the model performance more comprehensively, we choose two representative models for estimation and comparison: VAR(2) and VAR(10).
+
+## CV
+
+```{r}
+cv_rmse_var <- function(ts_data, p, h = 3, initial = 180) {
+  n <- nrow(ts_data)
+  actuals <- c()
+  preds <- c()
+  
+  for (i in seq(initial, n - h)) {
+    train_data <- ts_data[1:i, ]
+    test_data <- ts_data[(i + 1):(i + h), "ElecPrice"]
+    
+    fit <- VAR(train_data, p = p, type = "const")
+    fcast <- predict(fit, n.ahead = h)
+    
+    pred <- fcast$fcst$ElecPrice[1:h, "fcst"]
+    
+    actuals <- c(actuals, test_data)
+    preds <- c(preds, pred)
+  }
+  
+  rmse <- sqrt(mean((actuals - preds)^2, na.rm = TRUE))
+  return(rmse)
+}
+```
+
+```{r}
+rmse_var2  <- cv_rmse_var(ts_goe, p = 2, h = 3, initial = 180)
+print(rmse_var2)
+rmse_var10 <- cv_rmse_var(ts_goe, p = 10, h = 3, initial = 180)
+print(rmse_var10)
+
+df_rmse <- data.frame(
+  Model = c("VAR(2)", "VAR(10)"),
+  RMSE = c(rmse_var2, rmse_var10)
+)
+
+```
+
+```{r}
+ggplot(df_rmse, aes(x = Model, y = RMSE, fill = Model)) +
+  geom_col(width = 0.6) +
+  labs(title = "RMSE Comparison of VAR Models (3-Month Forecast)",
+       y = "RMSE (ElecPrice)",
+       x = "VAR Model (p)") +
+  theme_minimal()
+```
+
+Based on the comparison of the RMSE of the two models, VAR (2) has lower RMSE, so VAR (2) is the best model and the final model
+
+## Forecast
+
+```{r}
+class(df_goe$YearMonth)
+```
+
+```{r}
+df_goe$YearMonth <- as.yearmon(df_goe$YearMonth, format = "%Y-%m")
+df_goe$YearMonth <- as.Date(df_goe$YearMonth)
+
+df_goe <- df_goe[, c("YearMonth", "GasPrice", "OilPrice", "ElecPrice")]
+df_goe <- na.omit(df_goe)
+
+
+ts_goe <- ts(df_goe[, -1], 
+             start = c(year(min(df_goe$YearMonth)), month(min(df_goe$YearMonth))), 
+             frequency = 12)
+
+
+fit_var2 <- VAR(ts_goe, p = 2, type = "both")
+summary(fit_var2)
+
+forecast_goe <- predict(fit_var2, n.ahead = 12)
+
+elec_pred <- forecast_goe$fcst$ElecPrice[, "fcst"]
+
+
+elec_hist <- data.frame(YearMonth = df_goe$YearMonth, ElecPrice = df_goe$ElecPrice)
+
+
+last_date <- tail(elec_hist$YearMonth, 1)
+elec_pred_dates <- seq(from = last_date %m+% months(1), by = "month", length.out = 12)
+
+
+df_pred <- data.frame(YearMonth = elec_pred_dates, ElecPrice = elec_pred)
+
+```
+
+**Equation**
+
+$$
+\begin{aligned}
+\mathrm{GasPrice}t
+&= 0.4701746\,\mathrm{GasPrice}{t-1}
++0.0135197\,\mathrm{OilPrice}{t-1}
++0.1501739\,\mathrm{ElecPrice}{t-1}\\
+&\quad+0.3044221\,\mathrm{GasPrice}{t-2}
+-0.0082407\,\mathrm{OilPrice}{t-2}
+-0.0847928\,\mathrm{ElecPrice}{t-2}\\
+&\quad+0.9207582
+-0.0022250\;t
+\;+\;\varepsilon{1,t}\,.
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\mathrm{OilPrice}t
+&= -0.0259251\,\mathrm{GasPrice}{t-1}
++0.9735693\,\mathrm{OilPrice}{t-1}
++0.8952930\,\mathrm{ElecPrice}{t-1}\\
+&\quad+0.2240970\,\mathrm{GasPrice}{t-2}
+-0.3494050\,\mathrm{OilPrice}{t-2}
+-0.0586250\,\mathrm{ElecPrice}{t-2}\\
+&\quad+3.3663550
++0.0030390\;t
+\;+\;\varepsilon{2,t}\,.
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+\mathrm{ElecPrice}t
+&= -0.2752690\,\mathrm{GasPrice}{t-1}
++0.0151680\,\mathrm{OilPrice}{t-1}
++0.6857790\,\mathrm{ElecPrice}{t-1}\\
+&\quad+0.4023820\,\mathrm{GasPrice}{t-2}
+-0.0090140\,\mathrm{OilPrice}{t-2}
+-0.0306980\,\mathrm{ElecPrice}{t-2}\\
+&\quad+1.1028680
+-0.0037280\;t
+\;+\;\varepsilon{3,t}\,.
+\end{aligned}
+$$
+
+```{r}
+ggplot() +
+  geom_line(data = elec_hist, aes(x = YearMonth, y = ElecPrice), color = "black", size = 1) +
+  geom_line(data = df_pred, aes(x = YearMonth, y = ElecPrice), color = "blue", size = 1, linetype = "dashed") +
+  geom_point(data = df_pred, aes(x = YearMonth, y = ElecPrice), color = "blue") +
+  labs(title = "Forecast of ElecPrice Using VAR(2) Model",
+       x = "Date", y = "Electric Power Sector Natural Gas Price ($/Mcf)") +
+  theme_minimal()
+```
+
+We observe a slight upward trend in prices. The forecast chart shows that future prices have recovered slightly from recent lows, but overall remain at the lower end of the historical volatility range.
+
+Combined with historical data that shows natural gas prices gradually dropping back to pre-Epidemic levels after experiencing significant volatility in 2022, the current VAR model projections suggest that dramatic volatility similar to that seen in the past will not occur in the coming year. This forecast has practical implications and may reflect contextual factors such as the gradual recovery of the supply chain, the continuing transition of the energy mix, and the stabilization of the fuel mix in the power sector.
+
+In addition, GasPrice and OilPrice are used as endogenous variables in the model, further strengthening the predictive power of ElecPrice. This suggests that the construction of a multivariate VAR model can more accurately capture the natural gas price trend than a univariate model in the context of strong energy market linkages.

@@ -1,0 +1,82 @@
+---
+title: "Data Source"
+author: "Ke Tian"
+format: html
+editor: visual
+---
+
+# Data Source
+
+## 1. Overview
+
+This section provides an overview of the data sources used in this project, ensuring that they are sufficient to answer the ten key research questions. It details the data collection methods, sources, descriptions, and links for accessibility.
+
+## 2. Data Sources
+
+### **Dataset 1: Natural Gas Summary**
+
+-   **Description**: This dataset contains a comprehensive summary of natural gas statistics, including production, consumption, pricing, and storage data over time.
+
+-   **Sources & Methods**:
+
+    -   Data collected from the U.S. Energy Information Administration (EIA) and other official government sources.
+
+        -   [Natural Gas Summary](https://www.eia.gov/dnav/ng/ng_sum_lsum_dcu_nus_m.htm)
+
+    -   Download from the website
+
+-   **Usage**: Used to analyze historical price trends, demand-supply correlations, and forecasting future trends.
+
+### **Dataset 2: U.S. Natural Gas Exports and Re-Exports by Country**
+
+-   **Description**: This dataset provides detailed information on U.S. natural gas exports and re-exports by destination country.
+
+-   **Sources & Methods**:
+
+    -   Data sourced from the U.S. Energy Information Administration (EIA) and trade records.
+
+        -   [Natural Gas Exports and Re-Exports by Country](https://www.eia.gov/dnav/ng/ng_move_expc_s1_a.htm)
+
+    -   Download from the website
+
+-   **Usage**: Used to assess the geopolitical impact of natural gas exports and analyze trade patterns.
+
+### **Dataset 3: US GDP**
+
+-   Description: This dataset is the U.S GDP over time
+
+-   Source & Method
+
+    -   The data from Federal Reserve Economic Data, it's reliable
+
+        -   <https://fred.stlouisfed.org/series/GDP>
+
+    -   Method: directly download the csv from the website
+
+### **Dataset 4: US Fossil Fuel Production**
+
+-   Description: This dataset is include the Coal and Oil production over time
+
+-   Source & Method
+
+    -   This data come from the website Our World in Data
+
+        -   <https://ourworldindata.org/grapher/fossil-fuel-production.zip?v=1&csvType=filtered&useColumnShortNames=false&tab=table>
+
+    -   Method: directly download from the website
+
+### **Dataset 5: Yohoo WTI Oil Stock Price**
+
+-   Description: This dataset is come from Yohoo oil stock price
+
+-   Source & Method
+
+    -   I got the stock price from the package quantmod in R
+
+### **Dataset 6: Yohoo NF=T Natural Gas Stock Price**
+
+-   Description: This dataset is come from Yohoo natural gas stock price
+
+-   Source & Method
+
+    -   I got the stock price from the package in R

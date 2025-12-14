@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.41">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ke Tian">
+
+<title>DSAN 5600 lab0 – Financial Time Series Models(ARCH/GARCH)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">DSAN 5600 lab0</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./aboutme.qmd"> 
+<span class="menu-text">About Me</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./introduction.html"> 
+<span class="menu-text">Introduction</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./ds.html"> 
+<span class="menu-text">Data Sources</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./dv.html"> 
+<span class="menu-text">Data Visualization</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./eda.html"> 
+<span class="menu-text">Exploratory Data Analysis</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./utsm.html"> 
+<span class="menu-text">Univariate TS Models (ARIMA/SARIMA)</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./mtsm.html"> 
+<span class="menu-text">Multivariate TS Models (ARIMAX/SARIMAX/VAR)</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./ftsm.html" aria-current="page"> 
+<span class="menu-text">Financial Time Series Models (ARCH/GARCH)</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./dp.html"> 
+<span class="menu-text">Deep Learning for TS</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./other.html"> 
+<span class="menu-text">Other: Interrupted TS/ARFIMA/ Spectral Analysis</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./conclusion.html"> 
+<span class="menu-text">Conclusion</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#financial-time-series-modelsarchgarch" id="toc-financial-time-series-modelsarchgarch" class="nav-link active" data-scroll-target="#financial-time-series-modelsarchgarch"><span class="header-section-number">1</span> Financial Time Series Models(ARCH/GARCH)</a>
+  <ul class="collapse">
+  <li><a href="#import-package" id="toc-import-package" class="nav-link" data-scroll-target="#import-package"><span class="header-section-number">1.1</span> Import package</a></li>
+  </ul></li>
+  <li><a href="#duk" id="toc-duk" class="nav-link" data-scroll-target="#duk"><span class="header-section-number">2</span> DUK</a>
+  <ul class="collapse">
+  <li><a href="#load-data-and-visualization" id="toc-load-data-and-visualization" class="nav-link" data-scroll-target="#load-data-and-visualization"><span class="header-section-number">2.1</span> Load data and visualization</a></li>
+  <li><a href="#acf-pacf" id="toc-acf-pacf" class="nav-link" data-scroll-target="#acf-pacf"><span class="header-section-number">2.2</span> ACF &amp; PACF</a></li>
+  <li><a href="#arima-model-select" id="toc-arima-model-select" class="nav-link" data-scroll-target="#arima-model-select"><span class="header-section-number">2.3</span> ARIMA Model Select</a>
+  <ul class="collapse">
+  <li><a href="#auto.arima" id="toc-auto.arima" class="nav-link" data-scroll-target="#auto.arima"><span class="header-section-number">2.3.1</span> auto.arima</a></li>
+  <li><a href="#model-diagnotic" id="toc-model-diagnotic" class="nav-link" data-scroll-target="#model-diagnotic"><span class="header-section-number">2.3.2</span> Model Diagnotic</a></li>
+  <li><a href="#compareation" id="toc-compareation" class="nav-link" data-scroll-target="#compareation"><span class="header-section-number">2.3.3</span> Compareation</a></li>
+  <li><a href="#further-modeling" id="toc-further-modeling" class="nav-link" data-scroll-target="#further-modeling"><span class="header-section-number">2.3.4</span> Further Modeling</a></li>
+  </ul></li>
+  <li><a href="#garch-model-selection" id="toc-garch-model-selection" class="nav-link" data-scroll-target="#garch-model-selection"><span class="header-section-number">2.4</span> GARCH Model Selection</a></li>
+  <li><a href="#model-select" id="toc-model-select" class="nav-link" data-scroll-target="#model-select"><span class="header-section-number">2.5</span> Model Select</a></li>
+  <li><a href="#final-model" id="toc-final-model" class="nav-link" data-scroll-target="#final-model"><span class="header-section-number">2.6</span> Final Model</a>
+  <ul class="collapse">
+  <li><a href="#box-ljung-test" id="toc-box-ljung-test" class="nav-link" data-scroll-target="#box-ljung-test"><span class="header-section-number">2.6.1</span> Box Ljung test</a></li>
+  </ul></li>
+  <li><a href="#forecast" id="toc-forecast" class="nav-link" data-scroll-target="#forecast"><span class="header-section-number">2.7</span> Forecast</a></li>
+  </ul></li>
+  <li><a href="#wti" id="toc-wti" class="nav-link" data-scroll-target="#wti"><span class="header-section-number">3</span> WTI</a>
+  <ul class="collapse">
+  <li><a href="#load-data-and-visualization-1" id="toc-load-data-and-visualization-1" class="nav-link" data-scroll-target="#load-data-and-visualization-1"><span class="header-section-number">3.1</span> Load data and visualization</a></li>
+  <li><a href="#acf-pacf-1" id="toc-acf-pacf-1" class="nav-link" data-scroll-target="#acf-pacf-1"><span class="header-section-number">3.2</span> ACF &amp; PACF</a></li>
+  <li><a href="#arima-model-selection" id="toc-arima-model-selection" class="nav-link" data-scroll-target="#arima-model-selection"><span class="header-section-number">3.3</span> ARIMA Model Selection</a>
+  <ul class="collapse">
+  <li><a href="#auto.arima-1" id="toc-auto.arima-1" class="nav-link" data-scroll-target="#auto.arima-1"><span class="header-section-number">3.3.1</span> auto.arima</a></li>
+  <li><a href="#compareation-1" id="toc-compareation-1" class="nav-link" data-scroll-target="#compareation-1"><span class="header-section-number">3.3.2</span> Compareation</a></li>
+  <li><a href="#further-modeling-1" id="toc-further-modeling-1" class="nav-link" data-scroll-target="#further-modeling-1"><span class="header-section-number">3.3.3</span> Further Modeling</a></li>
+  </ul></li>
+  <li><a href="#garch-model" id="toc-garch-model" class="nav-link" data-scroll-target="#garch-model"><span class="header-section-number">3.4</span> GARCH Model</a>
+  <ul class="collapse">
+  <li><a href="#model-select-1" id="toc-model-select-1" class="nav-link" data-scroll-target="#model-select-1"><span class="header-section-number">3.4.1</span> Model Select</a></li>
+  </ul></li>
+  <li><a href="#final-model-1" id="toc-final-model-1" class="nav-link" data-scroll-target="#final-model-1"><span class="header-section-number">3.5</span> Final Model</a>
+  <ul class="collapse">
+  <li><a href="#box-ljung-test-1" id="toc-box-ljung-test-1" class="nav-link" data-scroll-target="#box-ljung-test-1"><span class="header-section-number">3.5.1</span> Box-Ljung Test</a></li>
+  </ul></li>
+  <li><a href="#forecast-1" id="toc-forecast-1" class="nav-link" data-scroll-target="#forecast-1"><span class="header-section-number">3.6</span> Forecast</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Financial Time Series Models(ARCH/GARCH)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ke Tian </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="financial-time-series-modelsarchgarch" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Financial Time Series Models(ARCH/GARCH)</h1>
+<p>Natural gas prices are known for their frequent and sometimes sharp fluctuations, often driven by seasonal demand, supply conditions, and geopolitical events. These changes don’t just impact the commodity market—they can also affect companies that rely on natural gas as a key input. Duke Energy (DUK), one of the largest utility companies in the U.S., uses a significant amount of natural gas for power generation. This makes it a good candidate to explore whether movements in natural gas prices might also show up in the behavior of its stock returns.</p>
+<p>To better understand the nature of these fluctuations, we apply ARCH and GARCH models to both natural gas returns and DUK stock returns. These models are designed to capture volatility clustering—periods of calm followed by periods of turbulence—which is common in financial and commodity markets. By comparing the volatility patterns in both series, we aim to see whether there’s a shared structure or potential spillover in risk, which could have implications for investors and risk managers in energy-related sectors.</p>
+<section id="import-package" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="import-package"><span class="header-section-number">1.1</span> Import package</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(quantmod)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PerformanceAnalytics)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tseries)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(zoo)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fGarch)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forecast)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="duk" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> DUK</h1>
+<section id="load-data-and-visualization" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="load-data-and-visualization"><span class="header-section-number">2.1</span> Load data and visualization</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">"2010-01-01"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>end_date <span class="ot">&lt;-</span> <span class="fu">Sys.Date</span>()</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">getSymbols</span>(<span class="st">"DUK"</span>, <span class="at">from =</span> start_date, <span class="at">to =</span> end_date, <span class="at">src =</span> <span class="st">"yahoo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "DUK"</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>duk_price <span class="ot">&lt;-</span> <span class="fu">Cl</span>(DUK)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>duk_return <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(<span class="fu">dailyReturn</span>(duk_price, <span class="at">type =</span> <span class="st">"log"</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(duk_price, <span class="at">main =</span> <span class="st">"Duke Energy Price (DUK)"</span>, <span class="at">col =</span> <span class="st">"darkred"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(duk_return, <span class="at">main =</span> <span class="st">"DUK Log Return"</span>, <span class="at">col =</span> <span class="st">"purple"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>roll_sd_duk <span class="ot">&lt;-</span> <span class="fu">rollapply</span>(duk_return, <span class="at">width =</span> <span class="dv">20</span>, <span class="at">FUN =</span> sd, <span class="at">by =</span> <span class="dv">1</span>, <span class="at">fill =</span> <span class="cn">NA</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(roll_sd_duk, <span class="at">main =</span> <span class="st">"Rolling Volatility (DUK)"</span>, <span class="at">col =</span> <span class="st">"darkred"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"ADF Test for DUK Return:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>ADF Test for DUK Return:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">adf.test</span>(<span class="fu">na.omit</span>(duk_return)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Augmented Dickey-Fuller Test
+
+data:  na.omit(duk_return)
+Dickey-Fuller = -16.088, Lag order = 15, p-value = 0.01
+alternative hypothesis: stationary</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-2-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>From the log return plot and the rolling volatility plot, it can be observed that the natural gas returns are highly volatile and unstable, especially during the period of severe volatility in the energy market in 2021-2022, when volatility rises rapidly, which is a typical characteristic of volatility clustering.The volatility of DUK stock is relatively mild, but it has a significant jump in early 2020 under the impact of the epidemic, followed by a gradual fall in volatility. Volatility then tapers off, also exhibiting mild volatility aggregation.</p>
+</section>
+<section id="acf-pacf" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="acf-pacf"><span class="header-section-number">2.2</span> ACF &amp; PACF</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># acf and pacf of duk</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(<span class="fu">na.omit</span>(duk_return), <span class="at">main =</span> <span class="st">"ACF of DUK Return"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">pacf</span>(<span class="fu">na.omit</span>(duk_return), <span class="at">main =</span> <span class="st">"PACF of DUK Return"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>DUK’s ACF at lag1 has a significant peak, followed by a rapid decay, so q = 1, p can be 1,2,3,4, and we did not differentiate the data, so d = 0</p>
+</section>
+<section id="arima-model-select" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="arima-model-select"><span class="header-section-number">2.3</span> ARIMA Model Select</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ARIMA_c <span class="ot">&lt;-</span> <span class="cf">function</span>(p_min, p_max, q_min, q_max, data) {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  results <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="dv">0</span>, <span class="at">ncol =</span> <span class="dv">6</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(results) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"p"</span>, <span class="st">"d"</span>, <span class="st">"q"</span>, <span class="st">"AIC"</span>, <span class="st">"BIC"</span>, <span class="st">"AICc"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (p <span class="cf">in</span> p_min<span class="sc">:</span>p_max) {</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (q <span class="cf">in</span> q_min<span class="sc">:</span>q_max) {</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>      d <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      fit <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">Arima</span>(data, <span class="at">order =</span> <span class="fu">c</span>(p, d, q))</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      }, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit)) {</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        metrics <span class="ot">&lt;-</span> <span class="fu">c</span>(p, d, q, <span class="fu">AIC</span>(fit), <span class="fu">BIC</span>(fit), fit<span class="sc">$</span>aicc)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        results <span class="ot">&lt;-</span> <span class="fu">rbind</span>(results, metrics)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  results_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(results)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(results_df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"p"</span>, <span class="st">"d"</span>, <span class="st">"q"</span>, <span class="st">"AIC"</span>, <span class="st">"BIC"</span>, <span class="st">"AICc"</span>)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(results_df)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>output_duk <span class="ot">&lt;-</span> <span class="fu">ARIMA_c</span>(<span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">data =</span> duk_return)</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>output_duk[<span class="fu">which.min</span>(output_duk<span class="sc">$</span>AIC), ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>          p d q       AIC      BIC      AICc
+metrics.9 4 0 1 -23365.51 -23321.7 -23365.48</code></pre>
+</div>
+</div>
+<p>Based on the comparison results, the best model we chose is ARIMA (4, 0, 1) because it has the minimum AIC</p>
+<section id="auto.arima" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="auto.arima"><span class="header-section-number">2.3.1</span> auto.arima</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>auto_arima_duk <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(duk_return)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(auto_arima_duk)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: duk_return 
+ARIMA(2,0,2) with zero mean 
+
+Coefficients:
+          ar1      ar2     ma1     ma2
+      -0.7953  -0.4776  0.7276  0.5043
+s.e.   0.2493   0.1034  0.2398  0.0892
+
+sigma^2 = 0.0001393:  log likelihood = 11666.52
+AIC=-23323.03   AICc=-23323.02   BIC=-23291.74
+
+Training set error measures:
+                       ME       RMSE         MAE MPE MAPE      MASE        ACF1
+Training set 0.0002264897 0.01179841 0.008195372 NaN  Inf 0.6867761 0.000674026</code></pre>
+</div>
+</div>
+<p>The best model we chose using auto.arim was ARIMA (2, 0, 2)</p>
+</section>
+<section id="model-diagnotic" class="level3" data-number="2.3.2">
+<h3 data-number="2.3.2" class="anchored" data-anchor-id="model-diagnotic"><span class="header-section-number">2.3.2</span> Model Diagnotic</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(astsa)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>out_put_401 <span class="ot">&lt;-</span> <span class="fu">capture.output</span>(<span class="fu">sarima</span>(duk_return, <span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>out_put_202 <span class="ot">&lt;-</span> <span class="fu">capture.output</span>(<span class="fu">sarima</span>(duk_return, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="compareation" class="level3" data-number="2.3.3">
+<h3 data-number="2.3.3" class="anchored" data-anchor-id="compareation"><span class="header-section-number">2.3.3</span> Compareation</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>extract_model_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(model_output, <span class="at">label =</span> <span class="st">""</span>) {</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n\n</span><span class="st">==================== "</span>, label, <span class="st">" ====================</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  start <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">"Coefficients"</span>, model_output)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(start) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"No coefficients found in output.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  end <span class="ot">&lt;-</span> <span class="fu">min</span>(start <span class="sc">+</span> <span class="dv">10</span>, <span class="fu">length</span>(model_output))</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(model_output[start<span class="sc">:</span>end], <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="fu">extract_model_summary</span>(out_put_401, <span class="st">"ARIMA(4,0,1)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+====================  ARIMA(4,0,1)  ====================
+Coefficients: 
+      Estimate     SE  t.value p.value
+ar1    -0.8425 0.0424 -19.8894  0.0000
+ar2     0.0095 0.0212   0.4495  0.6531
+ar3     0.0131 0.0212   0.6190  0.5359
+ar4    -0.0971 0.0168  -5.7938  0.0000
+ma1     0.7843 0.0400  19.6266  0.0000
+xmean   0.0002 0.0002   1.3264  0.1848
+
+sigma^2 estimated as 0.0001375346 on 3856 degrees of freedom 
+ </code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">extract_model_summary</span>(out_put_202, <span class="st">"ARIMA(2,0,2)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+====================  ARIMA(2,0,2)  ====================
+Coefficients: 
+      Estimate     SE t.value p.value
+ar1    -0.7770 0.2279 -3.4092  0.0007
+ar2    -0.4784 0.1030 -4.6435  0.0000
+ma1     0.7099 0.2191  3.2395  0.0012
+ma2     0.5071 0.0916  5.5388  0.0000
+xmean   0.0002 0.0002  1.1886  0.2347
+
+sigma^2 estimated as 0.0001391524 on 3857 degrees of freedom 
+ 
+AIC = -6.03895  AICc = -6.038946  BIC = -6.029226 </code></pre>
+</div>
+</div>
+<p>Ultimately, I will choose ARIMA (4, 0, 1) as the best model because it has lower AIC and BIC values, suggesting that the model strikes a better balance between fitting the data and complexity.</p>
+</section>
+<section id="further-modeling" class="level3" data-number="2.3.4">
+<h3 data-number="2.3.4" class="anchored" data-anchor-id="further-modeling"><span class="header-section-number">2.3.4</span> Further Modeling</h3>
+<p>The standardized residual plot of the above model diagnosis shows that the center of the residual fluctuation is around the 0 line, indicating that the ARIMA model fits the mean part better, and there is an obvious fluctuation aggregation phenomenon in the plot, and the fluctuation of the residuals suddenly and significantly increases at t=2600, so we need to further modeling</p>
+</section>
+</section>
+<section id="garch-model-selection" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="garch-model-selection"><span class="header-section-number">2.4</span> GARCH Model Selection</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>arima_duk_fit <span class="ot">&lt;-</span> <span class="fu">Arima</span>(duk_return, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="at">include.drift =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>residuals_arima_duk <span class="ot">&lt;-</span> <span class="fu">residuals</span>(arima_duk_fit)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(residuals_arima_duk, <span class="at">main =</span> <span class="st">"ACF of ARIMA(4,0,1) Residuals"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(residuals_arima_duk<span class="sc">^</span><span class="dv">2</span>, <span class="at">main =</span> <span class="st">"ACF of Squared Residuals"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pacf</span>(residuals_arima_duk<span class="sc">^</span><span class="dv">2</span>, <span class="at">main =</span> <span class="st">"PACF of Squared Residuals"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the ACF and PACF plots of the residual squared term, the ACF shows a significant peak at lag1, followed by a slow decline, while the PACF shows significant peaks at lag1 and lag3.</p>
+<p>The slow decay in the ACF indicates that the previous volatility affects the current volatility, there is volatility persistence, which is the feature captured by the GARCH model.</p>
+<p>So it is better to use GARCH because it can model both abruptness and persistence of volatility. This will provide a more comprehensive fitting and forecasting capability than the ARCH model.</p>
+</section>
+<section id="model-select" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="model-select"><span class="header-section-number">2.5</span> Model Select</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>cc<span class="ot">&lt;-</span><span class="dv">1</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (p <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>) {</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  models[[cc]] <span class="ot">&lt;-</span> <span class="fu">garch</span>(residuals_arima_duk, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, p), <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  cc <span class="ot">&lt;-</span> cc <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>GARCH_AIC <span class="ot">&lt;-</span> <span class="fu">sapply</span>(models, AIC)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>best_index <span class="ot">&lt;-</span> <span class="fu">which.min</span>(GARCH_AIC)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>models[[best_index]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+garch(x = residuals_arima_duk, order = c(1, p), trace = FALSE)
+
+Coefficient(s):
+       a0         a1         b1  
+3.105e-06  7.237e-02  9.030e-01  </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"best model：GARCH(1,"</span>, best_index, <span class="st">")</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>best model：GARCH(1, 1 )</code></pre>
+</div>
+</div>
+<p>We compared the AIC of all the models and according to the results it shows that GARCH (1, 1) is the best model because it has lower AIC and it can fit the data better compared to other models</p>
+</section>
+<section id="final-model" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="final-model"><span class="header-section-number">2.6</span> Final Model</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>arima_fit_duk <span class="ot">&lt;-</span> <span class="fu">Arima</span>(duk_return, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">1</span>), <span class="at">include.drift =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(arima_fit_duk)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: duk_return 
+ARIMA(4,0,1) with drift 
+
+Coefficients:
+          ar1     ar2     ar3      ar4     ma1  intercept  drift
+      -0.8425  0.0095  0.0131  -0.0971  0.7844      3e-04      0
+s.e.   0.0423  0.0212  0.0213   0.0168  0.0399      4e-04      0
+
+sigma^2 = 0.0001378:  log likelihood = 11689.76
+AIC=-23363.53   AICc=-23363.49   BIC=-23313.45
+
+Training set error measures:
+                       ME      RMSE        MAE MPE MAPE      MASE         ACF1
+Training set -5.39054e-06 0.0117275 0.00819309 NaN  Inf 0.6865849 0.0007816745</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>arima_res_duk<span class="ot">&lt;-</span><span class="fu">residuals</span>(arima_fit_duk)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>final_fit_duk <span class="ot">&lt;-</span> <span class="fu">garchFit</span>(<span class="sc">~</span> <span class="fu">garch</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="at">data =</span> arima_res_duk, <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(final_fit_duk)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Title:
+ GARCH Modelling 
+
+Call:
+ garchFit(formula = ~garch(1, 1), data = arima_res_duk, trace = FALSE) 
+
+Mean and Variance Equation:
+ data ~ garch(1, 1)
+&lt;environment: 0x13888d388&gt;
+ [data = arima_res_duk]
+
+Conditional Distribution:
+ norm 
+
+Coefficient(s):
+        mu       omega      alpha1       beta1  
+5.3905e-05  3.1297e-06  7.2556e-02  9.0259e-01  
+
+Std. Errors:
+ based on Hessian 
+
+Error Analysis:
+        Estimate  Std. Error  t value Pr(&gt;|t|)    
+mu     5.391e-05   1.555e-04    0.347    0.729    
+omega  3.130e-06   7.419e-07    4.219 2.46e-05 ***
+alpha1 7.256e-02   8.796e-03    8.248 2.22e-16 ***
+beta1  9.026e-01   1.258e-02   71.762  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Log Likelihood:
+ 12160.82    normalized:  3.148841 
+
+Description:
+ Sun May 11 16:27:08 2025 by user:  
+
+
+Standardised Residuals Tests:
+                                  Statistic      p-Value
+ Jarque-Bera Test   R    Chi^2  832.8920403 0.000000e+00
+ Shapiro-Wilk Test  R    W        0.9804906 0.000000e+00
+ Ljung-Box Test     R    Q(10)   43.5184881 4.016130e-06
+ Ljung-Box Test     R    Q(15)   46.8029170 3.959327e-05
+ Ljung-Box Test     R    Q(20)   52.5644024 9.416277e-05
+ Ljung-Box Test     R^2  Q(10)    3.0913846 9.791909e-01
+ Ljung-Box Test     R^2  Q(15)    5.9205795 9.810511e-01
+ Ljung-Box Test     R^2  Q(20)   16.0757641 7.119130e-01
+ LM Arch Test       R    TR^2     3.4068210 9.919266e-01
+
+Information Criterion Statistics:
+      AIC       BIC       SIC      HQIC 
+-6.295611 -6.289128 -6.295613 -6.293309 </code></pre>
+</div>
+</div>
+<section id="box-ljung-test" class="level3" data-number="2.6.1">
+<h3 data-number="2.6.1" class="anchored" data-anchor-id="box-ljung-test"><span class="header-section-number">2.6.1</span> Box Ljung test</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>std_res <span class="ot">&lt;-</span> <span class="fu">residuals</span>(final_fit_duk, <span class="at">standardize =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Box.test</span>(std_res, <span class="at">lag =</span> <span class="dv">10</span>, <span class="at">type =</span> <span class="st">"Ljung-Box"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Box-Ljung test
+
+data:  std_res
+X-squared = 43.518, df = 10, p-value = 4.016e-06</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Box.test</span>(std_res<span class="sc">^</span><span class="dv">2</span>, <span class="at">lag =</span> <span class="dv">10</span>, <span class="at">type =</span> <span class="st">"Ljung-Box"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Box-Ljung test
+
+data:  std_res^2
+X-squared = 3.0914, df = 10, p-value = 0.9792</code></pre>
+</div>
+</div>
+<p>The Box-Ljung test for standardized residuals gives a very small p-value (p = 3.717e-06), indicating that significant autocorrelation still exists in the residuals. The Box-Ljung test for the squared standardized residuals shows a large p-value (p = 0.9803) indicating that there is no significant autocorrelation in the squared residuals, which suggests that the GARCH(1,1) model is successful in capturing the aggregation effect of volatility (conditional heteroskedasticity) in the data, and that it is successful in modeling volatility. ## Equation</p>
+<p><span class="math display">\[
+x_t = 0.0003 - 0.8465 x_{t-1} + 0.0103 x_{t-2} + 0.0140 x_{t-3} - 0.0969 x_{t-4} + w_t + 0.7894 w_{t-1}
+\]</span> <span class="math display">\[
+\sigma_t^2 = 3.0957 \times 10^{-6} + 0.072697 \cdot w_{t-1}^2 + 0.90288 \cdot \sigma_{t-1}^2
+\]</span></p>
+</section>
+</section>
+<section id="forecast" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="forecast"><span class="header-section-number">2.7</span> Forecast</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">predict</span>(final_fit_duk, <span class="at">n.ahead =</span> <span class="dv">100</span>, <span class="at">plot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    meanForecast  meanError standardDeviation lowerInterval upperInterval
+1    5.39054e-05 0.01191671        0.01191671   -0.02330242    0.02341023
+2    5.39054e-05 0.01189992        0.01189992   -0.02326951    0.02337732
+3    5.39054e-05 0.01188352        0.01188352   -0.02323738    0.02334519
+4    5.39054e-05 0.01186751        0.01186751   -0.02320599    0.02331380
+5    5.39054e-05 0.01185188        0.01185188   -0.02317535    0.02328316
+6    5.39054e-05 0.01183661        0.01183661   -0.02314543    0.02325324
+7    5.39054e-05 0.01182171        0.01182171   -0.02311622    0.02322403
+8    5.39054e-05 0.01180716        0.01180716   -0.02308770    0.02319551
+9    5.39054e-05 0.01179295        0.01179295   -0.02305985    0.02316766
+10   5.39054e-05 0.01177908        0.01177908   -0.02303266    0.02314047
+11   5.39054e-05 0.01176553        0.01176553   -0.02300612    0.02311393
+12   5.39054e-05 0.01175231        0.01175231   -0.02298021    0.02308802
+13   5.39054e-05 0.01173941        0.01173941   -0.02295491    0.02306272
+14   5.39054e-05 0.01172681        0.01172681   -0.02293021    0.02303803
+15   5.39054e-05 0.01171451        0.01171451   -0.02290611    0.02301392
+16   5.39054e-05 0.01170250        0.01170250   -0.02288258    0.02299039
+17   5.39054e-05 0.01169078        0.01169078   -0.02285961    0.02296742
+18   5.39054e-05 0.01167934        0.01167934   -0.02283718    0.02294500
+19   5.39054e-05 0.01166818        0.01166818   -0.02281530    0.02292311
+20   5.39054e-05 0.01165728        0.01165728   -0.02279394    0.02290175
+21   5.39054e-05 0.01164664        0.01164664   -0.02277309    0.02288090
+22   5.39054e-05 0.01163626        0.01163626   -0.02275274    0.02286055
+23   5.39054e-05 0.01162612        0.01162612   -0.02273288    0.02284069
+24   5.39054e-05 0.01161623        0.01161623   -0.02271349    0.02282130
+25   5.39054e-05 0.01160658        0.01160658   -0.02269457    0.02280238
+26   5.39054e-05 0.01159716        0.01159716   -0.02267611    0.02278392
+27   5.39054e-05 0.01158797        0.01158797   -0.02265809    0.02276590
+28   5.39054e-05 0.01157899        0.01157899   -0.02264050    0.02274831
+29   5.39054e-05 0.01157024        0.01157024   -0.02262334    0.02273115
+30   5.39054e-05 0.01156169        0.01156169   -0.02260660    0.02271441
+31   5.39054e-05 0.01155335        0.01155335   -0.02259025    0.02269806
+32   5.39054e-05 0.01154522        0.01154522   -0.02257430    0.02268211
+33   5.39054e-05 0.01153728        0.01153728   -0.02255874    0.02266655
+34   5.39054e-05 0.01152953        0.01152953   -0.02254356    0.02265137
+35   5.39054e-05 0.01152197        0.01152197   -0.02252874    0.02263655
+36   5.39054e-05 0.01151459        0.01151459   -0.02251428    0.02262209
+37   5.39054e-05 0.01150739        0.01150739   -0.02250017    0.02260798
+38   5.39054e-05 0.01150037        0.01150037   -0.02248640    0.02259421
+39   5.39054e-05 0.01149351        0.01149351   -0.02247297    0.02258078
+40   5.39054e-05 0.01148683        0.01148683   -0.02245986    0.02256767
+41   5.39054e-05 0.01148030        0.01148030   -0.02244707    0.02255488
+42   5.39054e-05 0.01147394        0.01147394   -0.02243460    0.02254241
+43   5.39054e-05 0.01146772        0.01146772   -0.02242242    0.02253023
+44   5.39054e-05 0.01146166        0.01146166   -0.02241054    0.02251835
+45   5.39054e-05 0.01145575        0.01145575   -0.02239896    0.02250677
+46   5.39054e-05 0.01144998        0.01144998   -0.02238765    0.02249546
+47   5.39054e-05 0.01144436        0.01144436   -0.02237662    0.02248443
+48   5.39054e-05 0.01143886        0.01143886   -0.02236586    0.02247367
+49   5.39054e-05 0.01143351        0.01143351   -0.02235536    0.02246317
+50   5.39054e-05 0.01142828        0.01142828   -0.02234511    0.02245292
+51   5.39054e-05 0.01142318        0.01142318   -0.02233512    0.02244293
+52   5.39054e-05 0.01141821        0.01141821   -0.02232537    0.02243318
+53   5.39054e-05 0.01141336        0.01141336   -0.02231586    0.02242367
+54   5.39054e-05 0.01140862        0.01140862   -0.02230658    0.02241439
+55   5.39054e-05 0.01140400        0.01140400   -0.02229753    0.02240534
+56   5.39054e-05 0.01139950        0.01139950   -0.02228870    0.02239651
+57   5.39054e-05 0.01139510        0.01139510   -0.02228009    0.02238790
+58   5.39054e-05 0.01139082        0.01139082   -0.02227168    0.02237950
+59   5.39054e-05 0.01138663        0.01138663   -0.02226349    0.02237130
+60   5.39054e-05 0.01138255        0.01138255   -0.02225549    0.02236330
+61   5.39054e-05 0.01137857        0.01137857   -0.02224769    0.02235550
+62   5.39054e-05 0.01137469        0.01137469   -0.02224008    0.02234789
+63   5.39054e-05 0.01137091        0.01137091   -0.02223266    0.02234047
+64   5.39054e-05 0.01136721        0.01136721   -0.02222542    0.02233323
+65   5.39054e-05 0.01136361        0.01136361   -0.02221836    0.02232617
+66   5.39054e-05 0.01136009        0.01136009   -0.02221147    0.02231928
+67   5.39054e-05 0.01135666        0.01135666   -0.02220475    0.02231256
+68   5.39054e-05 0.01135332        0.01135332   -0.02219819    0.02230600
+69   5.39054e-05 0.01135006        0.01135006   -0.02219180    0.02229961
+70   5.39054e-05 0.01134688        0.01134688   -0.02218556    0.02229337
+71   5.39054e-05 0.01134377        0.01134377   -0.02217948    0.02228729
+72   5.39054e-05 0.01134074        0.01134074   -0.02217354    0.02228135
+73   5.39054e-05 0.01133779        0.01133779   -0.02216776    0.02227557
+74   5.39054e-05 0.01133491        0.01133491   -0.02216211    0.02226992
+75   5.39054e-05 0.01133210        0.01133210   -0.02215660    0.02226441
+76   5.39054e-05 0.01132936        0.01132936   -0.02215123    0.02225904
+77   5.39054e-05 0.01132669        0.01132669   -0.02214599    0.02225380
+78   5.39054e-05 0.01132408        0.01132408   -0.02214088    0.02224870
+79   5.39054e-05 0.01132154        0.01132154   -0.02213590    0.02224371
+80   5.39054e-05 0.01131906        0.01131906   -0.02213104    0.02223885
+81   5.39054e-05 0.01131664        0.01131664   -0.02212630    0.02223411
+82   5.39054e-05 0.01131428        0.01131428   -0.02212167    0.02222948
+83   5.39054e-05 0.01131198        0.01131198   -0.02211716    0.02222497
+84   5.39054e-05 0.01130973        0.01130973   -0.02211276    0.02222057
+85   5.39054e-05 0.01130754        0.01130754   -0.02210847    0.02221628
+86   5.39054e-05 0.01130541        0.01130541   -0.02210429    0.02221210
+87   5.39054e-05 0.01130333        0.01130333   -0.02210021    0.02220802
+88   5.39054e-05 0.01130129        0.01130129   -0.02209623    0.02220404
+89   5.39054e-05 0.01129931        0.01129931   -0.02209234    0.02220015
+90   5.39054e-05 0.01129738        0.01129738   -0.02208856    0.02219637
+91   5.39054e-05 0.01129550        0.01129550   -0.02208486    0.02219267
+92   5.39054e-05 0.01129366        0.01129366   -0.02208126    0.02218907
+93   5.39054e-05 0.01129187        0.01129187   -0.02207775    0.02218556
+94   5.39054e-05 0.01129012        0.01129012   -0.02207432    0.02218213
+95   5.39054e-05 0.01128841        0.01128841   -0.02207098    0.02217879
+96   5.39054e-05 0.01128675        0.01128675   -0.02206772    0.02217553
+97   5.39054e-05 0.01128513        0.01128513   -0.02206454    0.02217235
+98   5.39054e-05 0.01128355        0.01128355   -0.02206144    0.02216925
+99   5.39054e-05 0.01128201        0.01128201   -0.02205842    0.02216623
+100  5.39054e-05 0.01128050        0.01128050   -0.02205547    0.02216328</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="wti" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> WTI</h1>
+<section id="load-data-and-visualization-1" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="load-data-and-visualization-1"><span class="header-section-number">3.1</span> Load data and visualization</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">getSymbols</span>(<span class="st">"CL=F"</span>, <span class="at">from =</span> start_date, <span class="at">to =</span> end_date, <span class="at">src =</span> <span class="st">"yahoo"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "CL=F"</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>oil_price <span class="ot">&lt;-</span> <span class="fu">Cl</span>(<span class="st">`</span><span class="at">CL=F</span><span class="st">`</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>oil_return <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(<span class="fu">dailyReturn</span>(oil_price, <span class="at">type =</span> <span class="st">"log"</span>))</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(oil_price, <span class="at">main =</span> <span class="st">"WTI Crude Oil Price (CL=F)"</span>, <span class="at">col =</span> <span class="st">"darkgreen"</span>)</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(oil_return, <span class="at">main =</span> <span class="st">"WTI Oil Log Return"</span>, <span class="at">col =</span> <span class="st">"blue"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>roll_sd_oil <span class="ot">&lt;-</span> <span class="fu">rollapply</span>(oil_return, <span class="at">width =</span> <span class="dv">20</span>, <span class="at">FUN =</span> sd, <span class="at">by =</span> <span class="dv">1</span>, <span class="at">fill =</span> <span class="cn">NA</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(roll_sd_oil, <span class="at">main =</span> <span class="st">"Rolling Volatility (WTI Crude Oil)"</span>, <span class="at">col =</span> <span class="st">"darkgreen"</span>)</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"ADF Test for WTI Oil Return:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>ADF Test for WTI Oil Return:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">adf.test</span>(<span class="fu">na.omit</span>(oil_return)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Augmented Dickey-Fuller Test
+
+data:  na.omit(oil_return)
+Dickey-Fuller = -13.639, Lag order = 15, p-value = 0.01
+alternative hypothesis: stationary</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-18-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The ADF test shows that the p-value is significantly less than 0.05 and the logarithmic yield series of WTI is smooth.</p>
+<p>The raw price volatility was high, especially during the 2020 epidemic shock, and there were obvious structural fluctuations, but the price itself is not a smooth series.</p>
+<p>The logarithmic yield plot shows that the volatility clustering has periods of very small returns and periods of sudden volatility, with very high amplitudes during the 2020 epidemic.</p>
+<p>The rolling standard deviation plot shows significant changes in volatility over time, with volatility spiking to about 0.13 around 2020, much higher than the 0.02 ~ 0.05 in normal times, with significant conditional heteroskedasticity</p>
+</section>
+<section id="acf-pacf-1" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="acf-pacf-1"><span class="header-section-number">3.2</span> ACF &amp; PACF</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(<span class="fu">na.omit</span>(oil_return), <span class="at">main =</span> <span class="st">"ACF of WTI Oil Return"</span>)</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">pacf</span>(<span class="fu">na.omit</span>(oil_return), <span class="at">main =</span> <span class="st">"PACF of WTI Oil Return"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>According to ACF and PACF, we define p = 3, d = 0, q = 1</p>
+</section>
+<section id="arima-model-selection" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="arima-model-selection"><span class="header-section-number">3.3</span> ARIMA Model Selection</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>ARIMA_c <span class="ot">&lt;-</span> <span class="cf">function</span>(p_min, p_max, q_min, q_max, data) {</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  results <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="at">nrow =</span> <span class="dv">0</span>, <span class="at">ncol =</span> <span class="dv">6</span>)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(results) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"p"</span>, <span class="st">"d"</span>, <span class="st">"q"</span>, <span class="st">"AIC"</span>, <span class="st">"BIC"</span>, <span class="st">"AICc"</span>)</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (p <span class="cf">in</span> p_min<span class="sc">:</span>p_max) {</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (q <span class="cf">in</span> q_min<span class="sc">:</span>q_max) {</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>      d <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> ((p <span class="sc">+</span> d <span class="sc">+</span> q) <span class="sc">&lt;=</span> <span class="dv">6</span>) {</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>        fit <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>({</span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>          <span class="fu">Arima</span>(<span class="fu">na.omit</span>(data), <span class="at">order =</span> <span class="fu">c</span>(p, d, q))</span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>        }, <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fit)) {</span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>          metrics <span class="ot">&lt;-</span> <span class="fu">c</span>(p, d, q, <span class="fu">AIC</span>(fit), <span class="fu">BIC</span>(fit), fit<span class="sc">$</span>aicc)</span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>          results <span class="ot">&lt;-</span> <span class="fu">rbind</span>(results, metrics)</span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>  results_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(results)</span>
+<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(results_df) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"p"</span>, <span class="st">"d"</span>, <span class="st">"q"</span>, <span class="st">"AIC"</span>, <span class="st">"BIC"</span>, <span class="st">"AICc"</span>)</span>
+<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(results_df)</span>
+<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> <span class="fu">ARIMA_c</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">0</span>, <span class="dv">5</span>, <span class="at">data =</span> oil_return)</span>
+<span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-27"><a href="#cb45-27" aria-hidden="true" tabindex="-1"></a>output[<span class="fu">which.min</span>(output<span class="sc">$</span>AIC), ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>           p d q      AIC       BIC      AICc
+metrics.10 1 0 4 -17345.3 -17301.49 -17345.27</code></pre>
+</div>
+</div>
+<p>Based on the minimum AIC value, we get the best fitting model when ARIMA (1, 0, 4)</p>
+<section id="auto.arima-1" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="auto.arima-1"><span class="header-section-number">3.3.1</span> auto.arima</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>fit_auto_arima <span class="ot">&lt;-</span> <span class="fu">auto.arima</span>(oil_return)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit_auto_arima)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: oil_return 
+ARIMA(0,0,0) with zero mean 
+
+sigma^2 = 0.0006581:  log likelihood = 8660.14
+AIC=-17318.27   AICc=-17318.27   BIC=-17312.01
+
+Training set error measures:
+                       ME       RMSE        MAE MPE MAPE      MASE         ACF1
+Training set 8.088928e-05 0.02565341 0.01685628 100  100 0.6963552 -0.006833729</code></pre>
+</div>
+</div>
+<p>ARIMA (1, 0, 1) at the best fitting model selected by Auto.arima ### Model Diagnotic</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(astsa)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>out_put_104 <span class="ot">&lt;-</span> <span class="fu">capture.output</span>(<span class="fu">sarima</span>(oil_return, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">4</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>out_put_101 <span class="ot">&lt;-</span> <span class="fu">capture.output</span>(<span class="fu">sarima</span>(oil_return, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="compareation-1" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="compareation-1"><span class="header-section-number">3.3.2</span> Compareation</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>extract_model_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(model_output, <span class="at">label =</span> <span class="st">""</span>) {</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n\n</span><span class="st">==================== "</span>, label, <span class="st">" ====================</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  start <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">"Coefficients"</span>, model_output)</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(start) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span>(<span class="st">"No coefficients found in output.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>()</span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>  end <span class="ot">&lt;-</span> <span class="fu">min</span>(start <span class="sc">+</span> <span class="dv">10</span>, <span class="fu">length</span>(model_output))</span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(model_output[start<span class="sc">:</span>end], <span class="at">sep =</span> <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a><span class="fu">extract_model_summary</span>(out_put_104, <span class="st">"ARIMA(1,0,4)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+====================  ARIMA(1,0,4)  ====================
+Coefficients: 
+      Estimate     SE  t.value p.value
+ar1     0.8978 0.0345  26.0558  0.0000
+ma1    -0.9079 0.0376 -24.1222  0.0000
+ma2    -0.0085 0.0216  -0.3937  0.6938
+ma3    -0.0636 0.0221  -2.8816  0.0040
+ma4     0.1009 0.0168   5.9917  0.0000
+xmean   0.0001 0.0005   0.1536  0.8779
+
+sigma^2 estimated as 0.0006514664 on 3853 degrees of freedom 
+ </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">extract_model_summary</span>(out_put_101, <span class="st">"ARIMA(1,0,1)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+
+====================  ARIMA(1,0,1)  ====================
+Coefficients: 
+      Estimate    SE t.value p.value
+ar1    -0.0033   NaN     NaN     NaN
+ma1    -0.0037   NaN     NaN     NaN
+xmean   0.0001 4e-04  0.1971  0.8438
+
+sigma^2 estimated as 0.0006580599 on 3856 degrees of freedom 
+ 
+AIC = -4.486264  AICc = -4.486263  BIC = -4.479778 
+ </code></pre>
+</div>
+</div>
+<p>Finally, I will choose ARIMA (1, 0, 4) as the best model because it has the lowest AIC and the coefficients are more significant</p>
+</section>
+<section id="further-modeling-1" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="further-modeling-1"><span class="header-section-number">3.3.3</span> Further Modeling</h3>
+<p>The standardized residual plots for the model ARIMA (1, 0, 4) show that residual fluctuations are significantly more dramatic in some intervals than in others, reflecting the phenomenon of fluctuation aggregation, and that although the ARIMA model captures the mean structure, the phenomenon of heteroskedasticity is still present in the residuals. The variance of the residuals varies over time and is not stable. There are characteristics of clustered large fluctuations alternating with periods of stability. We need further GARCH modeling</p>
+</section>
+</section>
+<section id="garch-model" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="garch-model"><span class="header-section-number">3.4</span> GARCH Model</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>arima_oil_fit <span class="ot">&lt;-</span> <span class="fu">Arima</span>(oil_return, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">4</span>), <span class="at">include.drift =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>residuals_arima_oil <span class="ot">&lt;-</span> <span class="fu">residuals</span>(arima_oil_fit)</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(residuals_arima_oil, <span class="at">main =</span> <span class="st">"ACF of ARIMA(1,0,4) Residuals"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acf</span>(residuals_arima_oil<span class="sc">^</span><span class="dv">2</span>, <span class="at">main =</span> <span class="st">"ACF of Squared Residuals"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pacf</span>(residuals_arima_oil<span class="sc">^</span><span class="dv">2</span>, <span class="at">main =</span> <span class="st">"PACF of Squared Residuals"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Based on the ACF and PACF plots of the residual squared terms, the ACF shows a significant peak at lag 1, and the PACF shows significant peaks at la1 and lag 3. This indicates that there is a strong ARCH effect and fluctuation persistence in the data.</p>
+<section id="model-select-1" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="model-select-1"><span class="header-section-number">3.4.1</span> Model Select</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>models <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>cc<span class="ot">&lt;-</span><span class="dv">1</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (p <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>) {</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>  models[[cc]] <span class="ot">&lt;-</span> <span class="fu">garch</span>(residuals_arima_oil, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, p), <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  cc <span class="ot">&lt;-</span> cc <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>GARCH_AIC <span class="ot">&lt;-</span> <span class="fu">sapply</span>(models, AIC)</span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>best_index <span class="ot">&lt;-</span> <span class="fu">which.min</span>(GARCH_AIC)</span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>models[[best_index]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+garch(x = residuals_arima_oil, order = c(1, p), trace = FALSE)
+
+Coefficient(s):
+       a0         a1         b1  
+1.322e-05  1.183e-01  8.622e-01  </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"best model：GARCH(1,"</span>, best_index, <span class="st">")</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>best model：GARCH(1, 1 )</code></pre>
+</div>
+</div>
+<p>Based on the results we know that the best model is GARCH (1, 1) because it has the smallest AIC and fits the data better compared to other models</p>
+</section>
+</section>
+<section id="final-model-1" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="final-model-1"><span class="header-section-number">3.5</span> Final Model</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>arima_fit_oil <span class="ot">&lt;-</span> <span class="fu">Arima</span>(oil_return, <span class="at">order =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">4</span>), <span class="at">include.drift =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(arima_fit_oil)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: oil_return 
+ARIMA(1,0,4) with drift 
+
+Coefficients:
+         ar1      ma1      ma2      ma3     ma4  intercept  drift
+      0.8973  -0.9075  -0.0085  -0.0635  0.1007     -2e-04      0
+s.e.  0.0415   0.0432   0.0216   0.0221  0.0169      1e-03      0
+
+sigma^2 = 0.0006526:  log likelihood = 8679.68
+AIC=-17343.35   AICc=-17343.32   BIC=-17293.29
+
+Training set error measures:
+                       ME       RMSE        MAE MPE MAPE      MASE         ACF1
+Training set 4.026767e-05 0.02552366 0.01690032 NaN  Inf 0.6981748 3.251813e-05</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>arima_res_oil<span class="ot">&lt;-</span><span class="fu">residuals</span>(arima_fit_oil)</span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>final_fit_oil <span class="ot">&lt;-</span> <span class="fu">garchFit</span>(<span class="sc">~</span> <span class="fu">garch</span>(<span class="dv">1</span>, <span class="dv">1</span>), <span class="at">data =</span> arima_res_oil, <span class="at">trace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(final_fit_oil)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Title:
+ GARCH Modelling 
+
+Call:
+ garchFit(formula = ~garch(1, 1), data = arima_res_oil, trace = FALSE) 
+
+Mean and Variance Equation:
+ data ~ garch(1, 1)
+&lt;environment: 0x138b21038&gt;
+ [data = arima_res_oil]
+
+Conditional Distribution:
+ norm 
+
+Coefficient(s):
+        mu       omega      alpha1       beta1  
+2.7376e-04  1.3329e-05  1.1900e-01  8.6131e-01  
+
+Std. Errors:
+ based on Hessian 
+
+Error Analysis:
+        Estimate  Std. Error  t value Pr(&gt;|t|)    
+mu     2.738e-04   2.939e-04    0.932    0.352    
+omega  1.333e-05   2.571e-06    5.185 2.16e-07 ***
+alpha1 1.190e-01   1.164e-02   10.224  &lt; 2e-16 ***
+beta1  8.613e-01   1.317e-02   65.390  &lt; 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Log Likelihood:
+ 9490.825    normalized:  2.4594 
+
+Description:
+ Sun May 11 16:27:11 2025 by user:  
+
+
+Standardised Residuals Tests:
+                                   Statistic    p-Value
+ Jarque-Bera Test   R    Chi^2  1623.9012435 0.00000000
+ Shapiro-Wilk Test  R    W         0.9734328 0.00000000
+ Ljung-Box Test     R    Q(10)    18.8141412 0.04268787
+ Ljung-Box Test     R    Q(15)    20.1981035 0.16446420
+ Ljung-Box Test     R    Q(20)    25.8308924 0.17146991
+ Ljung-Box Test     R^2  Q(10)     7.8830718 0.64025724
+ Ljung-Box Test     R^2  Q(15)    14.7498908 0.46957863
+ Ljung-Box Test     R^2  Q(20)    16.6485844 0.67566041
+ LM Arch Test       R    TR^2     11.1667669 0.51468344
+
+Information Criterion Statistics:
+      AIC       BIC       SIC      HQIC 
+-4.916727 -4.910241 -4.916730 -4.914424 </code></pre>
+</div>
+</div>
+<section id="box-ljung-test-1" class="level3" data-number="3.5.1">
+<h3 data-number="3.5.1" class="anchored" data-anchor-id="box-ljung-test-1"><span class="header-section-number">3.5.1</span> Box-Ljung Test</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>std_res <span class="ot">&lt;-</span> <span class="fu">residuals</span>(final_fit_oil, <span class="at">standardize =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Box.test</span>(std_res, <span class="at">lag =</span> <span class="dv">10</span>, <span class="at">type =</span> <span class="st">"Ljung-Box"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Box-Ljung test
+
+data:  std_res
+X-squared = 18.814, df = 10, p-value = 0.04269</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Box.test</span>(std_res<span class="sc">^</span><span class="dv">2</span>, <span class="at">lag =</span> <span class="dv">10</span>, <span class="at">type =</span> <span class="st">"Ljung-Box"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Box-Ljung test
+
+data:  std_res^2
+X-squared = 7.8831, df = 10, p-value = 0.6403</code></pre>
+</div>
+</div>
+<p>The Box-Ljung test shows that there is still a slight autocorrelation in the standardized residuals of the model (p-value = 0.043), suggesting that there may be room for further optimization of the ARIMA mean equation. However, the squares of the standardized residuals are not significantly autocorrelated across lags (p-value = 0.642), indicating that the GARCH variance equation has successfully captured the conditional heteroskedasticity characteristics of the data. Thus, the model is effective in modeling volatility, the residual behavior is close to white noise, and the GARCH part performs well. ## Equation <span class="math display">\[
+x_t = 0.8957 x_{t-1} - 0.9047 \epsilon_{t-1} - 0.0104 \epsilon_{t-2} - 0.0638 \epsilon_{t-3} + 0.1020 \epsilon_{t-4} + \epsilon_t
+\]</span></p>
+<p><span class="math display">\[
+\sigma_t^2 = 1.324 \times 10^{-5} + 0.1187 \cdot \epsilon_{t-1}^2 + 0.8618 \cdot \sigma_{t-1}^2
+\]</span></p>
+</section>
+</section>
+<section id="forecast-1" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="forecast-1"><span class="header-section-number">3.6</span> Forecast</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">predict</span>(final_fit_oil, <span class="at">n.ahead =</span> <span class="dv">100</span>, <span class="at">plot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="ftsm_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    meanForecast  meanError standardDeviation lowerInterval upperInterval
+1   0.0002737644 0.02583710        0.02583710   -0.05036602    0.05091355
+2   0.0002737644 0.02584071        0.02584071   -0.05037309    0.05092062
+3   0.0002737644 0.02584425        0.02584425   -0.05038003    0.05092756
+4   0.0002737644 0.02584771        0.02584771   -0.05038682    0.05093435
+5   0.0002737644 0.02585111        0.02585111   -0.05039349    0.05094101
+6   0.0002737644 0.02585444        0.02585444   -0.05040002    0.05094754
+7   0.0002737644 0.02585771        0.02585771   -0.05040642    0.05095394
+8   0.0002737644 0.02586091        0.02586091   -0.05041269    0.05096022
+9   0.0002737644 0.02586405        0.02586405   -0.05041884    0.05096637
+10  0.0002737644 0.02586712        0.02586712   -0.05042487    0.05097239
+11  0.0002737644 0.02587014        0.02587014   -0.05043077    0.05097830
+12  0.0002737644 0.02587309        0.02587309   -0.05043657    0.05098409
+13  0.0002737644 0.02587599        0.02587599   -0.05044224    0.05098977
+14  0.0002737644 0.02587883        0.02587883   -0.05044781    0.05099533
+15  0.0002737644 0.02588161        0.02588161   -0.05045326    0.05100079
+16  0.0002737644 0.02588434        0.02588434   -0.05045861    0.05100613
+17  0.0002737644 0.02588701        0.02588701   -0.05046385    0.05101138
+18  0.0002737644 0.02588963        0.02588963   -0.05046898    0.05101651
+19  0.0002737644 0.02589220        0.02589220   -0.05047402    0.05102155
+20  0.0002737644 0.02589472        0.02589472   -0.05047895    0.05102648
+21  0.0002737644 0.02589719        0.02589719   -0.05048379    0.05103132
+22  0.0002737644 0.02589961        0.02589961   -0.05048853    0.05103606
+23  0.0002737644 0.02590198        0.02590198   -0.05049318    0.05104071
+24  0.0002737644 0.02590430        0.02590430   -0.05049774    0.05104527
+25  0.0002737644 0.02590658        0.02590658   -0.05050220    0.05104973
+26  0.0002737644 0.02590882        0.02590882   -0.05050658    0.05105411
+27  0.0002737644 0.02591101        0.02591101   -0.05051087    0.05105840
+28  0.0002737644 0.02591315        0.02591315   -0.05051508    0.05106261
+29  0.0002737644 0.02591526        0.02591526   -0.05051920    0.05106673
+30  0.0002737644 0.02591732        0.02591732   -0.05052325    0.05107077
+31  0.0002737644 0.02591934        0.02591934   -0.05052721    0.05107474
+32  0.0002737644 0.02592132        0.02592132   -0.05053109    0.05107862
+33  0.0002737644 0.02592326        0.02592326   -0.05053490    0.05108243
+34  0.0002737644 0.02592517        0.02592517   -0.05053863    0.05108616
+35  0.0002737644 0.02592703        0.02592703   -0.05054229    0.05108982
+36  0.0002737644 0.02592886        0.02592886   -0.05054587    0.05109340
+37  0.0002737644 0.02593066        0.02593066   -0.05054939    0.05109692
+38  0.0002737644 0.02593241        0.02593241   -0.05055283    0.05110036
+39  0.0002737644 0.02593414        0.02593414   -0.05055621    0.05110374
+40  0.0002737644 0.02593583        0.02593583   -0.05055952    0.05110705
+41  0.0002737644 0.02593748        0.02593748   -0.05056277    0.05111030
+42  0.0002737644 0.02593911        0.02593911   -0.05056595    0.05111348
+43  0.0002737644 0.02594070        0.02594070   -0.05056907    0.05111660
+44  0.0002737644 0.02594226        0.02594226   -0.05057212    0.05111965
+45  0.0002737644 0.02594378        0.02594378   -0.05057512    0.05112265
+46  0.0002737644 0.02594528        0.02594528   -0.05057806    0.05112559
+47  0.0002737644 0.02594675        0.02594675   -0.05058094    0.05112846
+48  0.0002737644 0.02594819        0.02594819   -0.05058376    0.05113129
+49  0.0002737644 0.02594960        0.02594960   -0.05058653    0.05113405
+50  0.0002737644 0.02595099        0.02595099   -0.05058924    0.05113677
+51  0.0002737644 0.02595234        0.02595234   -0.05059190    0.05113942
+52  0.0002737644 0.02595367        0.02595367   -0.05059450    0.05114203
+53  0.0002737644 0.02595498        0.02595498   -0.05059706    0.05114459
+54  0.0002737644 0.02595626        0.02595626   -0.05059956    0.05114709
+55  0.0002737644 0.02595751        0.02595751   -0.05060202    0.05114954
+56  0.0002737644 0.02595874        0.02595874   -0.05060442    0.05115195
+57  0.0002737644 0.02595994        0.02595994   -0.05060678    0.05115431
+58  0.0002737644 0.02596112        0.02596112   -0.05060909    0.05115662
+59  0.0002737644 0.02596228        0.02596228   -0.05061136    0.05115889
+60  0.0002737644 0.02596341        0.02596341   -0.05061358    0.05116111
+61  0.0002737644 0.02596452        0.02596452   -0.05061576    0.05116329
+62  0.0002737644 0.02596561        0.02596561   -0.05061790    0.05116542
+63  0.0002737644 0.02596668        0.02596668   -0.05061999    0.05116752
+64  0.0002737644 0.02596772        0.02596772   -0.05062204    0.05116957
+65  0.0002737644 0.02596875        0.02596875   -0.05062405    0.05117158
+66  0.0002737644 0.02596976        0.02596976   -0.05062602    0.05117355
+67  0.0002737644 0.02597074        0.02597074   -0.05062796    0.05117548
+68  0.0002737644 0.02597171        0.02597171   -0.05062985    0.05117738
+69  0.0002737644 0.02597266        0.02597266   -0.05063171    0.05117924
+70  0.0002737644 0.02597359        0.02597359   -0.05063353    0.05118106
+71  0.0002737644 0.02597450        0.02597450   -0.05063531    0.05118284
+72  0.0002737644 0.02597539        0.02597539   -0.05063706    0.05118459
+73  0.0002737644 0.02597626        0.02597626   -0.05063878    0.05118631
+74  0.0002737644 0.02597712        0.02597712   -0.05064046    0.05118799
+75  0.0002737644 0.02597796        0.02597796   -0.05064211    0.05118964
+76  0.0002737644 0.02597879        0.02597879   -0.05064372    0.05119125
+77  0.0002737644 0.02597959        0.02597959   -0.05064531    0.05119283
+78  0.0002737644 0.02598039        0.02598039   -0.05064686    0.05119439
+79  0.0002737644 0.02598116        0.02598116   -0.05064838    0.05119591
+80  0.0002737644 0.02598192        0.02598192   -0.05064987    0.05119740
+81  0.0002737644 0.02598267        0.02598267   -0.05065133    0.05119886
+82  0.0002737644 0.02598340        0.02598340   -0.05065277    0.05120030
+83  0.0002737644 0.02598412        0.02598412   -0.05065417    0.05120170
+84  0.0002737644 0.02598482        0.02598482   -0.05065555    0.05120308
+85  0.0002737644 0.02598551        0.02598551   -0.05065690    0.05120443
+86  0.0002737644 0.02598619        0.02598619   -0.05065822    0.05120575
+87  0.0002737644 0.02598685        0.02598685   -0.05065952    0.05120705
+88  0.0002737644 0.02598750        0.02598750   -0.05066079    0.05120832
+89  0.0002737644 0.02598813        0.02598813   -0.05066204    0.05120957
+90  0.0002737644 0.02598876        0.02598876   -0.05066326    0.05121079
+91  0.0002737644 0.02598937        0.02598937   -0.05066446    0.05121199
+92  0.0002737644 0.02598997        0.02598997   -0.05066564    0.05121317
+93  0.0002737644 0.02599056        0.02599056   -0.05066679    0.05121432
+94  0.0002737644 0.02599113        0.02599113   -0.05066792    0.05121545
+95  0.0002737644 0.02599170        0.02599170   -0.05066902    0.05121655
+96  0.0002737644 0.02599225        0.02599225   -0.05067011    0.05121764
+97  0.0002737644 0.02599279        0.02599279   -0.05067117    0.05121870
+98  0.0002737644 0.02599332        0.02599332   -0.05067222    0.05121974
+99  0.0002737644 0.02599385        0.02599385   -0.05067324    0.05122077
+100 0.0002737644 0.02599436        0.02599436   -0.05067424    0.05122177</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

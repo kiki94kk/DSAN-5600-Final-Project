@@ -1,0 +1,8 @@
+"0","df_gas <- read.csv(""Natural_Gas_Summary.csv"", skip = 6)"
+"0",""
+"0","df_clean <- df_gas[, c(""Month"","
+"0","                       ""U.S..Natural.Gas.Citygate.Price....Mcf....Mcf"","
+"0","                       ""U.S..Total.Natural.Gas.in.Underground.Storage..Working.Gas...MMcf..MMcf"","
+"0","                       ""U.S..Natural.Gas.Total.Consumption..MMcf..MMcf"")]"
+"0","colnames(df_clean) <- c(""Date"", ""GasPrice"", ""Storage"", ""Consumption"")"
+"0","write.csv(df_clean, file = ""cleaned_natural_gas_data.csv"", row.names = FALSE)"

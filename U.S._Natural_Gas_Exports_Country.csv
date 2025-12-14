@@ -1,0 +1,58 @@
+U.S. Natural Gas Exports and Re-Exports by Country
+https://www.eia.gov/dnav/ng/ng_move_expc_s1_a.htm
+16:16:34 GMT-0400 (&#21271;&#32654;&#19996;&#37096;&#22799;&#20196;&#26102;&#38388;)
+Data source: U.S. Energy Information Administration
+Series Link,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nin_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nks_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nat_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nbe_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nja_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nuk_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nnl_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nfr_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nci_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nit_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nbr_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-npo_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nmx_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-ntu_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-njo_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-npl_mmcfa.htm,https://www.eia.gov/dnav/ng/hist/ngm_epg0_eve_nus-nsp_mmcfa.htm
+Series Key,NGM_EPG0_EVE_NUS-NIN_MMCF.A,NGM_EPG0_EVE_NUS-NKS_MMCF.A,NGM_EPG0_EVE_NUS-NAT_MMCF.A,NGM_EPG0_EVE_NUS-NBE_MMCF.A,NGM_EPG0_EVE_NUS-NJA_MMCF.A,NGM_EPG0_EVE_NUS-NUK_MMCF.A,NGM_EPG0_EVE_NUS-NNL_MMCF.A,NGM_EPG0_EVE_NUS-NFR_MMCF.A,NGM_EPG0_EVE_NUS-NCI_MMCF.A,NGM_EPG0_EVE_NUS-NIT_MMCF.A,NGM_EPG0_EVE_NUS-NBR_MMCF.A,NGM_EPG0_EVE_NUS-NPO_MMCF.A,NGM_EPG0_EVE_NUS-NMX_MMCF.A,NGM_EPG0_EVE_NUS-NTU_MMCF.A,NGM_EPG0_EVE_NUS-NJO_MMCF.A,NGM_EPG0_EVE_NUS-NPL_MMCF.A,NGM_EPG0_EVE_NUS-NSP_MMCF.A
+Year,Liquefied U.S. Natural Gas Exports by Vessel to India MMcf,Liquefied U.S. Natural Gas Exports by Vessels to South Korea MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Argentina MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Belgium MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Japan MMcf,Liquefied U.S. Natural Gas Exports by Vessel to United Kingdom MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Netherlands MMcf,U.S. Liquefied Natural Gas Exports by Vessel to France MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Chile MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Italy MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Brazil MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Portugal MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Mexico MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Turkiye MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Jordan MMcf,Liquefied U.S. Natural Gas Exports by Vessel to Poland MMcf,U.S. Liquefied Natural Gas Exports by Vessel to Spain MMcf
+2024,256045,289232,51838,40841,335944,248540,463769,354824,56391,185773,106817,67729,8597,215268,42569,132568,210679
+2023,164325,275779,76921,97017,310190,450181,588557,492906,31217,197816,38595,72856,13661,156403,3282,139635,269504
+2022,122518,292732,66939,80245,209220,464462,378329,571399,30131,116034,71998,69583,3832,192067,0,127404,426657
+2021,196218,453483,83449,5584,354948,195046,174339,170780,121881,34210,307714,65865,15200,188849,0,56320,215062
+2020,124402,316227,15068,31946,287672,160199,85573,90237,80615,68453,111826,36922,34408,123957,6872,36900,199966
+2019,91481,270025,39293,23897,200864,118357,81361,117791,90357,68655,54298,53342,143371,30611,32332,38042,166684
+2018,57634,252223,27560,0,125534,51297,12188,18291,41186,17390,35645,12512,182246,23205,38794,3231,10310
+2017,20919,130185,16276,0,53218,3410,3042,0,25746,6493,17648,19523,140743,24855,36321,3440,29329
+2016,16915,10166,16661,,11137,0,0,,29405,3328,9196,3700,27470,8762,9870,0,2930
+2015,0,,0,,8262,,,,0,,0,0,,,,,
+2014,,,,,13310,,,,,,,,,,,,
+2012,,,,,9342,,,,,,,,,,,,
+2011,,,,,15271,,,,,,,,,,,,
+2010,,,,,30100,,,,,,,,,,,,
+2009,,,,,30536,,,,,,,,,,,,
+2008,,,,,39164,,,,,,,,,,,,
+2007,,,,,46501,,,,,,,,,,,,
+2006,,,,,60765,,,,,,,,,,,,
+2005,,,,,65124,,,,,,,,,,,,
+2004,,,,,62099,,,,,,,,,,,,
+2003,,,,,65698,,,,,,,,,,,,
+2002,,,,,63439,,,,,,,,,,,,
+2001,,,,,65753,,,,,,,,,,,,
+2000,,,,,65610,,,,,,,,,,,,
+1999,,,,,63607,,,,,,,,,,,,
+1998,,,,,65951,,,,,,,,,,,,
+1997,,,,,62187,,,,,,,,,,,,
+1996,,,,,67648,,,,,,,,,,,,
+1995,,,,,65283,,,,,,,,,,,,
+1994,,,,,62682,,,,,,,,,,,,
+1993,,,,,55989,,,,,,,,,,,,
+1992,,,,,52532,,,,,,,,,,,,
+1991,,,,,54005,,,,,,,,,,,,
+1990,,,,,52546,,,,,,,,,,,,
+1989,,,,,51424,,,,,,,,,,,,
+1988,,,,,51573,,,,,,,,,,,,
+1987,,,,,48599,,,,,,,,,,,,
+1986,,,,,50172,,,,,,,,,,,,
+1985,,,,,52883,,,,,,,,,,,,
+1984,,,,,52840,,,,,,,,,,,,
+1983,,,,,52857,,,,,,,,,,,,
+1982,,,,,49861,,,,,,,,,,,,
+1981,,,,,55929,,,,,,,,,,,,
+1980,,,,,44732,,,,,,,,,,,,
+1979,,,,,51289,,,,,,,,,,,,
+1978,,,,,48434,,,,,,,,,,,,
+1977,,,,,51655,,,,,,,,,,,,
+1976,,,,,49779,,,,,,,,,,,,
+1975,,,,,53002,,,,,,,,,,,,
+1974,,,,,50258,,,,,,,,,,,,
+1973,,,,,48346,,,,,,,,,,,,

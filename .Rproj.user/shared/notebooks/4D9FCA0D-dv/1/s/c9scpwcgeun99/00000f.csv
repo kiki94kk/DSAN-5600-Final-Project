@@ -1,0 +1,183 @@
+"0","#| code-fold: true"
+"0","#| code-summary: 'Importing Libraries'"
+"0","#| warning: false"
+"0","#| output: false"
+"0","library(tidyverse)"
+"2","── [1mAttaching core tidyverse packages[22m ───────────────────────────── tidyverse 2.0.0 ──
+[32m✔[39m [34mdplyr    [39m 1.1.4     [32m✔[39m [34mreadr    [39m 2.1.5
+[32m✔[39m [34mforcats  [39m 1.0.0     [32m✔[39m [34mstringr  [39m 1.5.1
+[32m✔[39m [34mggplot2  [39m 3.5.1     [32m✔[39m [34mtibble   [39m 3.2.1
+[32m✔[39m [34mlubridate[39m 1.9.3     [32m✔[39m [34mtidyr    [39m 1.3.1
+[32m✔[39m [34mpurrr    [39m 1.0.2     "
+"2","── [1mConflicts[22m ─────────────────────────────────────────────── tidyverse_conflicts() ──
+[31m✖[39m [34mdplyr[39m::[32mfilter()[39m masks [34mstats[39m::filter()
+[31m✖[39m [34mdplyr[39m::[32mlag()[39m    masks [34mstats[39m::lag()
+[36mℹ[39m Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors"
+"0","library(ggplot2)"
+"0","library(forecast)"
+"2","Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+"
+"2","This is forecast 8.23.0 
+  Want to meet other forecasters? Join the International Institute of Forecasters:
+  http://forecasters.org/
+"
+"0","library(astsa) "
+"2","
+Attaching package: ‘astsa’
+
+"
+"2","The following object is masked from ‘package:forecast’:
+
+    gas
+
+"
+"0","library(xts)"
+"2","Loading required package: zoo
+"
+"2","
+Attaching package: ‘zoo’
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    as.Date, as.Date.numeric
+
+"
+"2","
+######################### Warning from 'xts' package ##########################
+#                                                                             #
+# The dplyr lag() function breaks how base R's lag() function is supposed to  #
+# work, which breaks lag(my_xts). Calls to lag(my_xts) that you type or       #
+# source() into this session won't work correctly.                            #
+#                                                                             #
+# Use stats::lag() to make sure you're not using dplyr::lag(), or you can add #
+# conflictRules('dplyr', exclude = 'lag') to your .Rprofile to stop           #
+# dplyr from breaking base R's lag() function.                                #
+#                                                                             #
+# Code in packages is not affected. It's protected by R's namespace mechanism #
+# Set `options(xts.warn_dplyr_breaks_lag = FALSE)` to suppress this warning.  #
+#                                                                             #
+###############################################################################
+"
+"2","
+Attaching package: ‘xts’
+
+"
+"2","The following objects are masked from ‘package:dplyr’:
+
+    first, last
+
+"
+"0","library(tseries)"
+"2","
+    ‘tseries’ version: 0.10-58
+
+    ‘tseries’ is a package for time series analysis and computational
+    finance.
+
+    See ‘library(help=""tseries"")’ for details.
+
+"
+"0","library(fpp2)"
+"2","[30m── [1mAttaching packages[22m ─────────────────────────────────────────────────── fpp2 2.5 ──[39m
+"
+"2","[30m[32m✔[30m [34mfma      [30m 2.5     [32m✔[30m [34mexpsmooth[30m 2.3[39m
+"
+"2","[30m[39m
+"
+"2","
+Attaching package: ‘fpp2’
+
+"
+"2","The following object is masked from ‘package:astsa’:
+
+    oil
+
+"
+"0","library(fma)"
+"0","library(lubridate)"
+"0","library(tidyverse)"
+"0","library(TSstudio)"
+"0","library(quantmod)"
+"2","Loading required package: TTR
+"
+"0","library(tidyquant)"
+"2","── [1mAttaching core tidyquant packages[22m ──────────────────────────── tidyquant 1.0.10 ──
+[32m✔[39m [34mPerformanceAnalytics[39m 2.0.8     "
+"2","── [1mConflicts[22m ─────────────────────────────────────────────── tidyquant_conflicts() ──
+[31m✖[39m [34mzoo[39m::[32mas.Date()[39m                 masks [34mbase[39m::as.Date()
+[31m✖[39m [34mzoo[39m::[32mas.Date.numeric()[39m         masks [34mbase[39m::as.Date.numeric()
+[31m✖[39m [34mdplyr[39m::[32mfilter()[39m                masks [34mstats[39m::filter()
+[31m✖[39m [34mxts[39m::[32mfirst()[39m                   masks [34mdplyr[39m::first()
+[31m✖[39m [34mdplyr[39m::[32mlag()[39m                   masks [34mstats[39m::lag()
+[31m✖[39m [34mxts[39m::[32mlast()[39m                    masks [34mdplyr[39m::last()
+[31m✖[39m [34mPerformanceAnalytics[39m::[32mlegend()[39m masks [34mgraphics[39m::legend()
+[31m✖[39m [34mquantmod[39m::[32msummary()[39m            masks [34mbase[39m::summary()
+[36mℹ[39m Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors"
+"0","library(plotly)"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","Registered S3 methods overwritten by 'htmltools':
+  method               from         
+  print.html           tools:rstudio
+  print.shiny.tag      tools:rstudio
+  print.shiny.tag.list tools:rstudio
+"
+"2","Registered S3 method overwritten by 'htmlwidgets':
+  method           from         
+  print.htmlwidget tools:rstudio
+"
+"2","
+Attaching package: ‘plotly’
+
+"
+"2","The following object is masked from ‘package:ggplot2’:
+
+    last_plot
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    filter
+
+"
+"2","The following object is masked from ‘package:graphics’:
+
+    layout
+
+"
+"0","library(ggplot2)"
+"0","library(imputeTS)"
+"2","
+Attaching package: ‘imputeTS’
+
+"
+"2","The following object is masked from ‘package:tseries’:
+
+    na.remove
+
+"
+"2","The following object is masked from ‘package:zoo’:
+
+    na.locf
+
+"
+"0","library(gridExtra)"
+"2","
+Attaching package: ‘gridExtra’
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    combine
+
+"
+"0","library(reticulate)"
+"0","library(readxl)"
+"0","#use_python(""/usr/local/bin/python3"", require = T)"
+"0","#knitr::knit_engines$set(python = reticulate::eng_python)"
+"0","#py_install(""tensorflow"")"

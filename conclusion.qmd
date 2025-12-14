@@ -1,0 +1,74 @@
+---
+title: "Conclusion"
+format: html
+---
+
+![bigpicture](picture/bigpicture.jpg)
+
+# Guid Question
+
+This guide question contains almost all of the elements of natural gas price research, and readers can gain a more detailed understanding of natural gas price changes and forecasts by following these questions
+
+## Price trends
+
+**Qeustion 1: What are the long-term trends in natural gas prices?**
+
+**Question 2: What are the major volatility cycles or event-driven cycles in NG=F continuous futures prices?**
+
+From the time series chart we can get the following information, in the last 10 years there are two peaks in natural gas futures prices, concentrated in 2014, and between 2022 and 2023, the main reason for this is that in 2014 the United States was in the middle of the expansion of the shale gas revolution, which meant an increase in production, but probably due to the lack of related facilities and less efficient transportation, which led to a higher price. between 2022 and The peak in 2023 is characterized by rain Russia-Ukraine conflict breaking out, leading to a supply crisis in Europe for natural gas, and the U.S. exporting large quantities of natural gas leading to a shortage of indigenous supply leading to higher prices
+
+## External drivers and demand effects
+
+**Question 3: What is the linkage between oil prices and natural gas prices?**
+
+**Question 4: How does underground gas storage affect price volatility?**
+
+**Question 5: How does natural gas consumption affect prices?**
+
+Based on the time series and Arima forecast of oil and nutural gas price the rise and fall of international oil prices often “drive” synchronized changes in natural gas prices: when the price of crude oil rises sharply, the market bargaining power of natural gas as an alternative or complementary fuel increases, leading to similar increases and decreases in the price of gas during periods of sharp fluctuations in the oil market
+
+When storage are high, the market is well supplied and prices are relatively stable; when storage fall to low levels, any sudden drop in temperature or supply disruption can amplify price volatility. Maintaining moderate storage can buffer against unexpected demand and improve market stability
+
+There is a positive correlation between natural gas consumption and price, so if consumption increases, then natural gas inventories will decrease, which will cause the price of natural gas to spike.
+
+## Co-movement & interactions
+
+**Question 6: How do macroeconomic indicators (e.g., GDP growth) interact with natural gas prices?**
+
+**Question 7: Do electricity gas price fluctuations look ahead or synchronize with natural gas prices?**
+
+Natural gas prices have similar fluctuations as oil prices, but GDP shows a trend of growth, when we add GDP and oil to the forecast of natural gas prices, the forecast shows that natural gas gets a rapid growth trend in the near future, indicating that the growth of GDP has a significant impact on natural gas prices.
+
+By analyzing natural gas prices for electricity generation, we find that electricity prices and natural gas prices move in tandem-when electricity prices rise or fall, natural gas prices follow at the same time. It also affects the price of electricity
+
+Power generation gas synchronization is the strongest, when the summer peak or winter thermal power load increase, the collective purchasing of natural gas by power plants caused an immediate increase in prices; and in the heating off-season and parity power supply period, the price of gas for power generation and the overall market price synchronization down
+
+## Volatility & Risk Profile
+
+**Question 8: By fitting a GARCH model to WTI crude oil, can you predict the volatility of Natural gas Price?** The mean value of future oil price returns predicted by the GARCH model is close to 0, implying that oil price levels are not expected to rise or fall dramatically in the short term. Since natural gas and crude oil prices have historically been highly interlinked, it is reasonable to assume that - in the absence of unforeseen influences - short-term volatility in the natural gas market will also remain mild and stable, with relatively manageable price fluctuations.
+
+## Forecasting & Decision Support
+
+**Question 9: What did you find when comparing the different model predictions of natural gas prices?** Comparing the arima model and the VAR model, the future trend of natural gas is smooth in the prediction of the arima model, on the contrary, the natural gas price predicted by us using the VAR model shows an upward trend. This shows that the var model is more accurate than the arima model because other factors such as oil prices, GDP, etc. are added, and the increase or decrease of these variables directly affects the price of natural gas.
+
+# Conclusion
+
+This analysis is about Natural Gas Price Changes in U.S, Why am I interested in this topic? The reason is that I observed in China that there are a lot of trucks using natural gas, a clean energy source, instead of diesel trucks, and I asked some truckers who told me that natural gas surprisingly costs more than 20% less than diesel for the same mileage, making it more cost-effective than diesel. I was curious how the price of natural gas would change in the U.S., the world's largest consumer.
+
+To answer this question, I collected data on natural gas prices, oil prices (NG=F) from yahoo finance, consumption, storage, and production from the EIA, and U.S. Gross Domestic Product (GDP) from Fred, thus building a univariate TS model and a multivariate TS model to understand how natural gas prices change in the changes in the time series.
+
+Our analysis of natural gas prices, natural gas consumption, natural gas exports by country, natural gas storage and WTI visualization shows that natural gas prices fluctuate significantly between 2014 and 2022, mainly due to the fact that in 2014 the United States is in the midst of the expansion of the shale gas revolution, which implies an increase in production, but probably due to a lack of facilities and inefficient transportation. The peak period between 2022 and 2023 is characterized by a gas supply crisis in Europe due to the outbreak of the Russian-Ukrainian conflict and high gas exports from the United States, leading to higher gas prices. The consumption of natural gas is mainly for electricity generation and the main exporters of natural gas are France and the Netherlands. Natural gas reserves have been on the rise, especially after 2022, when most countries will have to import gas from the United States because of the Russian-Ukrainian conflict, which has led to a break in Europe's gas supply. WTI's stock market price falls off a cliff in 2020, which is related to Covid-19, and another peak is in 2022, which is also due to the Russian-Ukrainian conflict, leading to a rise in the oil price
+
+In order to investigate the forecasts affecting the changes in natural gas, we perform ARIMA/SARIMA forecasts for the variables related to natural gas production, price, consumption, reserves, and oil prices, respectively. The results show that natural gas production will continue to trend upward in the future.Oil prices and natural gas prices have strong synchronized fluctuations, and if U.S. oil prices rise, natural gas, as an alternative energy source, will lead to large imports of natural gas from other countries to the U.S., leading to a reduction in indigenous supply and thus higher natural gas prices. Natural gas consumption shows a slowly declining seasonal trend which is related to indigenous consumption, as the winter season has just ended, so residential natural gas consumption is lower. Reserve forecasts show a slow upward trend due to the fact that the Russia-Ukraine conflict has not yet ended, so many countries still need to import natural gas from the U.S. Overall the natural gas prices in the US will remain the same in the future and there will not be much of a price increase factor, but if the Russian-Ukrainian conflict ends in the future, other countries may still import natural gas from Russia so this is an important event that will affect the price of natural gas. I tried multivariate predictions related to natural gas and they all showed that natural gas would not grow significantly in the next 6 months, which is essentially the same as the univariate predictions of natural gas prices.
+
+In our ARCH/GARCH analysis of natural gas, we attempted to use the WTI data for forecasting purposes and used the results to predict future changes in natural gas. The results show that the mean value of the future oil price returns predicted by the GARCH model is close to 0, implying that the level of oil prices will not rise or fall significantly in the short term. Since natural gas and crude oil prices have historically been highly correlated, it is reasonable to assume that short-term volatility in the natural gas market will also remain moderate and stable, with relatively manageable price fluctuations in the absence of unforeseen effects.
+
+## Strategies
+
+According to the forecast results, natural gas prices are not expected to rise significantly in the short term, and the market overall remains relatively stable. In this context, it is recommended that procurement strategies prioritize a phased and demand-driven approach, avoiding one-time bulk purchases or panic buying. With limited upward momentum in prices, companies may adopt a rolling procurement strategy—replenishing supply monthly or quarterly based on actual needs—to reduce cash flow pressure and retain flexibility to respond to market fluctuations.
+
+For inventory management, it is advisable to maintain a reasonable and secure level of stock rather than accumulate excessive reserves. Based on historical average usage and volatility, companies should establish an upper inventory limit and define replenishment thresholds to ensure supply stability while controlling holding costs.
+
+Regarding hedging and contract strategies, it is not recommended to enter long-term fixed-price agreements at this stage. Instead, firms can prioritize index-linked or short-term adjustable contracts that offer greater price flexibility. If there are moderate concerns about future volatility, a small portion of risk-hedging tools such as options may be considered to cap potential cost exposure during unexpected events.
+
+Overall, this period of price stability provides a relatively low-risk window for operational decision-making. Companies should implement prudent resource allocation strategies to ensure supply while avoiding overcommitting to potentially unfavorable pricing. It is also a good opportunity to review past procurement decisions during high-volatility periods and prepare for possible price rebounds in the future.
